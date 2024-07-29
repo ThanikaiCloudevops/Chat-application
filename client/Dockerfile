@@ -2,11 +2,11 @@ FROM node:14
 
 WORKDIR /app/client
 
-COPY client/ ./
+COPY package.json ./
 
 RUN npm install 
 
-COPY client/ ./
+COPY ./ ./
 
 EXPOSE 3000
 
