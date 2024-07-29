@@ -1,4 +1,4 @@
-FROM node:14-aphine
+FROM node:14
 
 WORKDIR /app/client
 
