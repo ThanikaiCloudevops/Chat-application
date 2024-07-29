@@ -2,12 +2,12 @@ FROM node:18
 
 WORKDIR /usr/src/app
 
-COPY ./ ./
+COPY client/package*.json ./
 
 RUN npm install
 
-COPY . .
+COPY client/ .
 
 EXPOSE 3000
 
-CMD [ "node", "src/app.js" ]
+CMD [ "npm", "start" ]
