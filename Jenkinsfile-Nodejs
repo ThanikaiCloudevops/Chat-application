@@ -1,0 +1,106 @@
+pipeline {
+    agent any
+
+    tools {
+        nodejs 'nodejs'
+        jdk     'jdk17'
+        maven 'maven'
+    }
+    environment {
+        GITHUB_REPO = "https://github.com/ThanikaiCloudevops/Chat-application.git"
+        SCANNER_HOME = tool 'sonarqube'
+        DOCKER_CREDENTIALS_ID = credentials'docker-cr'
+        DOCKER_IMAGE_NAME = 'nodes'
+    }
+
+    stages {
+        stage('Clone Repo') {
+            steps {
+                checkout([$class: 'GitSCM',
+                    branches: [[name: '*/master']],
+                    userRemoteConfigs: [[url: "${env.GITHUB_REPO}"]]
+                ])
+            }
+        }
+        
+        stage('Check Version') {
+            steps {
+                script {
+                    sh 'node -v'
+                    sh 'docker --version'
+                    sh "${SCANNER_HOME}/bin/sonar-scanner --version"
+                }
+            }
+        }
+        
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    sh '''
+                        ${SCANNER_HOME}/bin/sonar-scanner \
+                        -Dsonar.host.url=http://52.66.236.77:9000/ \
+                        -Dsonar.login=squ_7ee3ac1a482ba7da5dbb1e327ef8686e115cdd12 \
+                        -Dsonar.projectKey=js \
+                        -Dsonar.java.binaries=. \
+                        -Dsonar.projectName=js
+                    '''
+                }
+            }
+        }
+        stage('OWASP Dependency-Check') {
+            steps {
+                sh '''
+                        docker run --rm -v "$(pwd)":/usr/src -w /usr/src owasp/dependency-check \
+                          --project my-react-app --scan . --format XML --out dependency-check-report.xml
+                    '''
+                // dependencyCheck additionalArguments: '--scan ./', odcInstallation: 'dp-check'
+                // dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+            }
+        }
+        stage('Trivy scan'){
+            steps{
+                script{
+                    sh 'trivy fs .'
+                }
+            }
+        }
+        
+        stage('Build Docker Image') {
+            steps {
+                script {
+                    sh 'docker build -f client/Dockerfile -t nodes .'
+                    sh 'docker images'
+                }
+            }
+        }
+        stage('Trivy image scan'){
+            steps{
+                script{
+                    sh 'trivy image nodes'
+                }
+            }
+        }
+        
+        stage('Tag and Push Docker Image') {
+            steps {
+                script {
+                    // Tag the Docker image
+                    sh 'docker tag nodes thanikai1/pub-image:latest'
+                    
+                    // Push the Docker image to Docker Hub
+                    docker.withRegistry('https://index.docker.io/v1/', DOCKER_CREDENTIALS_ID) {
+                        docker.image(DOCKER_IMAGE_NAME).push('latest')
+                    }
+                }
+            }
+        }
+        stage('Docker Run'){
+            steps{
+                script{
+                    sh ' docker run -d -p 3000:3000 --name=nodes thanikai1/pub-image'
+                }
+            }
+        }
+    }
+}
+
