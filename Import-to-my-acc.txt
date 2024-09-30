@@ -1,0 +1,209 @@
+pipeline {
+    agent {
+        label "krazy22"
+    }
+    tools {
+        nodejs "nvm"
+    }
+    environment {
+        VERSION = "1.0"
+        BITBUCKET_CREDENTIALS = "FSPAPI"
+    }
+    stages {
+        stage("Checkout Repositories") {
+            steps {
+                script {
+                    git(
+                        branch: 'master',
+                        credentialsId: "${BITBUCKET_CREDENTIALS}",
+                        url: "https://SciflareIT@bitbucket.org/dpl11-backend/krazyy22_api.git"
+                    )
+                }
+            }
+        }
+        stage("Node Version") {
+            steps {
+                script {
+                    sh "node -v"
+                }
+            }
+        }
+        stage("Install Dependencies") {
+            steps {
+                script {
+                    def modules = [
+                        "contests-module", "cron-module","game-module","scorcard-contest-module","user-auth-module",
+                        "user-module","wallet-module",
+                        "master-data-module","master-server"
+                    ]
+                    for (module in modules) {
+                        dir(module) {
+                            sh "sudo npm install"  
+                            sh "rm -rf */@tmp"  // Clean up if necessary
+                        }
+                    }
+                }
+            }
+        }
+        stage("Build Application") {
+            steps {
+                script {
+                    def modules = [
+                        "contests-module", "cron-module","game-module","scorcard-contest-module","user-auth-module",
+                        "user-module","wallet-module",
+                        "master-data-module","master-server"
+                    ]
+                    for (module in modules) {
+                        dir(module) {
+                            // Build the module
+                            sh "pwd"
+                            sh "npm run build"
+                        }
+                    }
+                }
+            }
+        }
+        stage("Run Application") {
+            steps {
+                script {
+                    def modules = [
+                        "contests-module", "cron-module","game-module","scorcard-contest-module","user-auth-module",
+                        "user-module","wallet-module",
+                        "master-data-module","master-server"
+                    ]
+                    for (module in modules) {
+                        sh "echo 'Running Application for ${module}'"
+                        sh "echo 'Checking if ${module} is already running'"
+                        sh "pm2 stop '${module}' || true"  // Stop the module if it's running, ignore if not
+                        sh '''
+                            sudo env PATH=$PATH:/opt/jenkins/tools/jenkins.plugins.nodejs.tools.NodeJSInstallation/nvm/bin /usr/local/lib/node_modules/pm2/bin/pm2 startup systemd -u ubuntu --hp /home/ubuntu
+                            pm2 save
+                        '''
+                        sh "pm2 start /opt/jenkins/workspace/Krazy22_dev/${module}/dist/src/main.js --name '${module}' -f"
+                        sh "pm2 list"
+                    }
+                }
+            }
+        }
+    }
+}
+dockerfile
+# Stage 1: Build
+FROM node:16 AS build
+
+# Set the working directory
+WORKDIR /usr/src/app
+
+# Copy package files
+COPY package*.json ./
+
+# Install all dependencies
+RUN npm install
+
+# Copy application code
+COPY . .
+
+# Build the application
+RUN npm run build
+
+# Stage 2: Production
+FROM gcr.io/distroless/nodejs:16
+
+# Set the working directory for the production image
+WORKDIR /usr/src/app
+
+# Copy only the necessary files from the build stage
+COPY --from=build /usr/src/app/dist ./dist
+COPY --from=build /usr/src/app/package.json ./
+COPY --from=build /usr/src/app/node_modules ./node_modules
+
+# Expose the port the app runs on
+EXPOSE 5002
+
+# Command to run the application
+CMD ["dist/src/main.js"]
+
+sonar-scan
+pipeline {
+    agent {
+        label "krazy22-staging"
+    }
+    tools {
+        nodejs "nvm"
+        jdk 'jdk-17'
+    }
+    environment {
+        BITBUCKET_CREDENTIALS = "FSPAPI"
+        SONAR_TOKEN = credentials("sonarscan")
+        SCANNER_HOME = tool "sonarscanner-krazy"
+        
+    }
+    stages{
+        stage("Checkout Scm") {
+            steps {
+                script {
+                    git(
+                        branch: 'master',
+                        credentialsId: "${BITBUCKET_CREDENTIALS}",
+                        url: "https://SciflareIT@bitbucket.org/dpl11-backend/krazyy22_api.git"
+                    )
+                }
+            }
+        }
+        stage("Version check"){
+            steps{
+                script{
+                    sh "node -v "
+                    sh "pwd"                }
+            }
+        }
+        // stage("Run unit test"){
+        //     steps{
+        //         script{
+        //             sh "npm test" // unit test 
+        //             // sh "npx mocha" // mocha test
+        //         }
+        //     }
+        // }
+        stage("Static Code Analysis") {
+            environment {
+                scannerHome = tool "sonarscanner-krazy"
+            }
+            steps {
+                script {
+                    sh '''
+                        ${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.host.url=http://65.1.92.45:9000/ \
+                        -Dsonar.login="${SONAR_TOKEN}" \
+                        -Dsonar.projectKey=krazy22-staging \
+                        -Dsonar.projectName=krazy22-staging \
+                        -Dsonar.java.binaries=./
+                    '''
+                }
+            }
+        }
+
+        // stage("OWASP Dependency-Check") {
+        //     steps {
+        //         script {
+        //             dependencyCheck additionalArguments: '--scan ./ --out . --format XML', odcInstallation: 'dp-scan'
+        //             dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+        //         }
+        //     }
+        // }
+        // stage(" Install Dependencies"){
+        //     steps{
+        //         script{
+        //             def modules = ['contests-module' , 'cron-module', 'game-module',
+        //             // 'scorcard-contest-module','user-auth-module','user-module' , 'wallet-module',
+        //             // 'master-data-module','master-server'
+        //             ]
+        //             for (module in modules){
+        //                 sh "pwd"
+        //                 sh "npm install"
+        //             }
+        //         }
+        //     }
+        // }
+    }
+}
