@@ -1,0 +1,108 @@
+pipeline {
+    agent {
+        label "krazy22"
+    }
+    tools {
+        nodejs "nvm"
+    }
+    environment {
+        BASE_VERSION = "1.0"
+        BITBUCKET_CREDENTIALS = "FSPAPI"
+    }
+    stages {
+        stage("Checkout Repositories") {
+            steps {
+                script {
+                    git(
+                        branch: 'master',
+                        credentialsId: "${BITBUCKET_CREDENTIALS}",
+                        url: "https://SciflareIT@bitbucket.org/dpl11-backend/krazyy22_api.git"
+                    )
+                }
+            }
+        }
+        stage("Node Version") {
+            steps {
+                script {
+                    sh "node -v"
+                }
+            }
+        }
+        stage("Docker Version") {
+            steps {
+                script {
+                    sh "docker --version"
+                }
+            }
+        }
+        stage("Build Docker Images") {
+            steps {
+                script {
+                    def modules = [
+                        "contests-module", "cron-module", "game-module", 
+                        // "scorcard-contest-module", "user-auth-module",
+                        // "user-module", "wallet-module", "master-data-module", "master-server"
+                    ]
+                    def version = String.format("%.1f", currentBuild.number / 10.0) // Calculate version
+                    for (module in modules) {
+                        dir(module) {
+                            // Build the docker images
+                            sh "docker build -t ${module}:${version} -f Dockerfile ."
+                        }
+                    }
+                }
+            }
+        }
+        stage("Run Application Using Docker") {
+            steps {
+                script {
+                def modules = [
+                "contests-module": "5002", "cron-module": "5100", "game-module": "5001"
+                // Add other modules as needed
+                ]
+                def version = String.format("%.1f", currentBuild.number / 10.0) // Use the same version
+
+                try {
+                    modules.each { moduleName, port ->
+                    sh "echo 'Running Application for ${moduleName}'"
+                    sh "echo 'Checking if ${moduleName} is already running'"
+                    sh "docker stop ${moduleName} || true"
+                    sh "docker rm ${moduleName} || true"
+                    sh "docker run -d --name ${moduleName} -p ${port}:${port} ${moduleName}:${version}"
+                    sh "docker ps"
+                    }
+                } catch (Exception e) {
+                    error "Failed to run Docker containers: ${e.message}"
+            }
+        }
+    }
+}
+
+        // stage("Run Application Using Docker") {
+        //     steps {
+        //         script {
+        //             def modules = [
+        //                 "contests-module": "5002", "cron-module": "5100", "game-module": "5001", 
+        //                 // "scorcard-contest-module": "4000", "user-auth-module": "5000",
+        //                 // "user-module": "5004", "wallet-module": "5005",
+        //                 // "master-data-module": "5008", "master-server": "3000"
+        //             ]
+        //             def version = String.format("%.1f", currentBuild.number / 10.0) // Use the same version
+
+        //             for (module in modules) {
+        //                 def moduleName = module.key
+        //                 def port = module.value
+                        
+        //                 sh "echo 'Running Application for ${moduleName}'"
+        //                 sh "echo 'Checking if ${moduleName} is already running'"
+        //                 sh "docker stop ${moduleName} || true" // Stop the module if it's running, ignore if not
+        //                 sh "docker rm ${moduleName} || true"
+        //                 // Run the Docker container
+        //                 sh "docker run -d --name ${moduleName} -p ${port}:${port} ${moduleName}:${version}"
+        //                 sh "docker ps"
+        //             }
+        //         }
+        //     }
+        // }
+    }
+}
