@@ -1,0 +1,74 @@
+pipeline {
+    agent {
+        label "krazy22-staging"
+    }
+    tools {
+        nodejs "nvm"
+        jdk 'jdk-17'
+    }
+    environment {
+        BITBUCKET_CREDENTIALS = "FSPAPI"
+        SONAR_TOKEN = credentials("sonarscan")
+        SCANNER_HOME = tool "sonarscanner-krazy"
+    }
+    stages {
+        stage("Checkout SCM") {
+            steps {
+                script {
+                    git(
+                        branch: 'master',
+                        credentialsId: "${BITBUCKET_CREDENTIALS}",
+                        url: "https://SciflareIT@bitbucket.org/dpl11-backend/krazyy22_api.git"
+                    )
+                }
+            }
+        }
+        stage("Version Check") {
+            steps {
+                script {
+                    sh "node -v"
+                    sh "pwd"
+                }
+            }
+        }
+        stage("Install Dependencies") {
+            steps {
+                script {
+                    def modules = [
+                        "contests-module", "cron-module", "game-module",
+                        "scorcard-contest-module", "user-auth-module", 
+                        "user-module", "wallet-module", "master-data-module", 
+                        "master-server"
+                    ]
+                    for (module in modules) {
+                        dir(module) { // Change directory to each module
+                            sh "npm install"
+                        }
+                    }
+                }
+            }
+        }
+        stage("Static Code Analysis") {
+            steps {
+                script {
+                    sh '''
+                        ${SCANNER_HOME}/bin/sonar-scanner \
+                        -Dsonar.host.url=http://65.1.92.45:9000/ \
+                        -Dsonar.login="${SONAR_TOKEN}" \
+                        -Dsonar.projectKey=krazy22-staging \
+                        -Dsonar.projectName=krazy22-staging \
+                        -Dsonar.java.binaries=./
+                    '''
+                }
+            }
+        }
+        stage("OWASP Dependency-Check") {
+            steps {
+                script {
+                    dependencyCheck additionalArguments: '--scan ./ --out . --format XML', odcInstallation: 'dp-scan'
+                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                }
+            }
+        }
+    }
+}
