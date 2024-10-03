@@ -1,0 +1,129 @@
+pipeline {
+    agent{
+        label "krazy22-staging"
+    }
+    tools {
+        nodejs "nvm"
+        jdk 'jdk-17'
+    }
+    environment {
+        BITBUCKET_CREDENTIALS = "FSPAPI"
+        SONAR_TOKEN = credentials("sonarscan")
+        SCANNER_HOME = tool "sonarscanner-krazy"
+        DOCKER_CREDENTIALS = credentials("dockercred")
+        Image_Name = "contests-module"
+    }
+    stages {
+        stage("Checkout SCM") {
+            steps {
+                script {
+                    git(
+                        branch: 'master',
+                        credentialsId: "${BITBUCKET_CREDENTIALS}",
+                        url: "https://SciflareIT@bitbucket.org/dpl11-backend/krazyy22_api.git"
+                    )
+                }
+            }
+        }
+        stage("Version Check and Cleanup") {
+            steps {
+                script {
+                    sh "node -v"
+                    sh "docker --version"
+                    sh "trivy --version"
+                    sh '''
+                        find . -maxdepth 1 -type d ! -name 'contests-module' ! -name '.' -exec rm -rf {} +
+                    '''
+                }
+            }
+        }
+        stage("Static Code Analysis") {
+            steps {
+                script {
+                    withSonarQubeEnv('sonarscan') { // Replace with your SonarQube instance name
+                    sh '''
+                        ${SCANNER_HOME}/bin/sonar-scanner \
+                        -Dsonar.host.url=http://65.1.92.45:9000/ \
+                        -Dsonar.login="${SONAR_TOKEN}" \
+                        -Dsonar.projectKey=krazy22-staging \
+                        -Dsonar.projectName=krazy22-staging \
+                        -Dsonar.java.binaries=./
+                    '''
+                    }
+                }
+            }
+        }
+        stage("OWASP Dependency-Check") {
+            steps {
+                script {
+                    dependencyCheck additionalArguments: '--scan ./ --out . --format XML', odcInstallation: 'dp-scan'
+                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                }
+            }
+        }
+        stage("Build Docker image contest-module"){
+            steps{
+                script{
+                    sh "pwd"
+                    def buildId = "${env.BUILD_NUMBER}"
+                    withDockerRegistry(credentialsId: 'dockercred', toolName: 'docker-kra'){
+                        dir("/opt/jenkins/workspace/krazy22-staging/contest-microservices/contests-module"){
+                            sh "docker build -t ${Image_Name}:${buildId} ."
+                            
+                        }
+                    }
+                }
+            }
+        }
+        stage("Trivy scan files and Images"){
+            steps{
+                script{
+                    sh "trivy fs ."
+                    sh "trivy image --scanners vuln ${Image_Name}:${env.BUILD_NUMBER}"
+                }
+            }
+        }
+        stage("Push Docker images") {
+            steps {
+                script {
+                    def buildId = "${env.BUILD_NUMBER}"
+                    withDockerRegistry(credentialsId: 'dockercred', toolName: 'docker-kra') {
+                        sh "docker tag ${Image_Name}:${buildId} sciflare/${Image_Name}:${buildId}"
+                        sh "docker push sciflare/${Image_Name}:${buildId}"
+                    }
+                }
+            }
+        }
+        stage("Remove Docker images"){
+            steps{
+                script{
+                    def buildId= "${env.BUILD_NUMBER}"
+                    sh "docker rmi sciflare/${Image_Name}:${buildId} || true"
+                    sh "docker rmi ${Image_Name}:${buildId} || true"
+                }
+            }
+        }
+        // stage("Run the Docker container") {
+        //     steps {
+        //         script {
+        //             sh "docker container prune -f" // Optional: this removes all stopped containers
+        //             withDockerRegistry(credentialsId: "dockercred", toolName: "docker-kra") {
+        //                 sh "docker run -d --name ${containerName} -p 5002:5002 sciflare/${Image_Name}:${env.BUILD_NUMBER}"
+        //             }
+        //         }
+        //     }
+        // }
+    }    
+}
+Build after other projects are built
+Projects to watch :
+
+contest-microservices: No dependencies.
+cron-microservices: Depends on contest-microservices.
+game-microservices: Depends on cron-microservices.
+master-data-microservices: Depends on game-microservices.
+user-auth-microservices: Depends on master-data-microservices.
+user-microservices: Depends on user-auth-microservices.
+wallet-microservices: Depends on user-microservices.
+scorecard-microservices: Depends on wallet-microservices.
+master-microservices: Depends on scorecard-microservices
