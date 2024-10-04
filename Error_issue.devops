@@ -1,0 +1,4 @@
+The error you're encountering indicates that the bcrypt module is trying to load a shared library (libc.musl-x86_64.so.1), but it cannot find it. 
+  This is a common issue when running Node.js applications that use native modules in environments with minimal libraries, such as Alpine Linux.
+
+  FROM node:14-buster
