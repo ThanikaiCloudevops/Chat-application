@@ -1,0 +1,6 @@
+# Git commands for creating empty branches in local to repo 
+ -> git init
+ -> git checkout --orphan <#branch_name>
+ -> git rm -rf .
+ -> git commit --allow-empty -m "Inital empty branch in repo"
+ -> git push origin <#branch_name>
