@@ -4,3 +4,7 @@
  -> git rm -rf .
  -> git commit --allow-empty -m "Inital empty branch in repo"
  -> git push origin <#branch_name>
+
+The error "fatal: refusing to merge unrelated histories"
+solution : git pull origin branch-name --allow-unrelated-histories
+
