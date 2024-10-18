@@ -1,0 +1,141 @@
+pipeline { 
+    agent {
+        label "krazy22-dev"
+    }
+    tools {
+        nodejs "nvm"
+    }
+    environment {
+        BITBUCKET_CREDENTIALS = "FSPAPI"
+        SONAR_TOKEN = credentials("sonarscan")
+        SCANNER_HOME = tool "sonarscanner-krazy"
+        DOCKER_CREDENTIALS = credentials("dockercred")
+        AWS_ACCESS_KEY_ID = credentials("aws_access_key") // Add AWS access key
+        AWS_SECRET_ACCESS_KEY = credentials("aws_secret_key") // Add AWS secret key
+        AWS_REGION = "us-east-1" // Set your desired AWS region
+    }
+    stages{
+        stage("Checkout SCM") {
+            steps {
+                script {
+                    git (
+                        branch: "developed-master",
+                        url: "https://SciflareIT@bitbucket.org/dpl11-backend/krazyy22_api.git",
+                        credentialsId: "${BITBUCKET_CREDENTIALS}"
+                    )
+                }
+            }
+        }
+        stage("Static Code Analysis") {
+            steps {
+                script {
+                    withSonarQubeEnv('sonarscan') {
+                        echo "SCANNER_HOME: ${SCANNER_HOME}"
+                        sh '''
+                            ${SCANNER_HOME}/bin/sonar-scanner -X \
+                            -Dsonar.host.url=http://65.1.92.45:9000/ \
+                            -Dsonar.login="${SONAR_TOKEN}" \
+                            -Dsonar.projectKey=krazy22-dev \
+                            -Dsonar.projectName=krazy22-dev \
+                            -Dsonar.java.binaries=./
+                        '''
+                    }
+                }
+            }
+        }
+        stage("Send Notification") {
+            steps {
+                script {
+                    def subject = "Build Notification: ${currentBuild.currentResult}"
+                    def body = """
+                        Build Number: ${env.BUILD_NUMBER}
+                        Job Name: ${env.JOB_NAME}
+                        Build Status: ${currentBuild.currentResult}
+                    """
+
+                    // AWS CLI command to send email using SES
+                    sh """
+                        aws ses send-email \
+                        --from "your_email@example.com" \
+                        --destination "ToAddresses=recipient@example.com" \
+                        --message "Subject={Data='${subject}'},Body={Text={Data='${body}'}}" \
+                        --region ${AWS_REGION}
+                    """
+                }
+            }
+        }
+    }
+}
+pipeline { 
+    agent {
+        label "krazy22-dev"
+    }
+    tools {
+        nodejs "nvm"
+    }
+    environment {
+        BITBUCKET_CREDENTIALS = "FSPAPI"
+        SONAR_TOKEN = credentials("sonarscan")
+        SCANNER_HOME = tool "sonarscanner-krazy"
+        DOCKER_CREDENTIALS = credentials("dockercred")
+        AWS_REGION = "us-east-1" // Set your desired AWS region
+        AWS_CREDENTIALS_ID = "aws-credentials" // Your Jenkins AWS credentials ID
+    }
+    stages {
+        stage("Checkout SCM") {
+            steps {
+                script {
+                    git (
+                        branch: "developed-master",
+                        url: "https://SciflareIT@bitbucket.org/dpl11-backend/krazyy22_api.git",
+                        credentialsId: "${BITBUCKET_CREDENTIALS}"
+                    )
+                }
+            }
+        }
+        stage("Static Code Analysis") {
+            steps {
+                script {
+                    withSonarQubeEnv('sonarscan') {
+                        echo "SCANNER_HOME: ${SCANNER_HOME}"
+                        sh '''
+                            ${SCANNER_HOME}/bin/sonar-scanner -X \
+                            -Dsonar.host.url=http://65.1.92.45:9000/ \
+                            -Dsonar.login="${SONAR_TOKEN}" \
+                            -Dsonar.projectKey=krazy22-dev \
+                            -Dsonar.projectName=krazy22-dev \
+                            -Dsonar.java.binaries=./
+                        '''
+                    }
+                }
+            }
+        }
+        stage("Send Notification") {
+            steps {
+                script {
+                    // Load AWS credentials
+                    def awsCredentials = withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: "${AWS_CREDENTIALS_ID}"]]) {
+                        return [AWS_ACCESS_KEY_ID: env.AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY: env.AWS_SECRET_ACCESS_KEY]
+                    }
+
+                    def subject = "Build Notification: ${currentBuild.currentResult}"
+                    def body = """
+                        Build Number: ${env.BUILD_NUMBER}
+                        Job Name: ${env.JOB_NAME}
+                        Build Status: ${currentBuild.currentResult}
+                    """
+
+                    // AWS CLI command to send email using SES
+                    sh """
+                        aws ses send-email \
+                        --from "your_email@example.com" \
+                        --destination "ToAddresses=recipient@example.com" \
+                        --message "Subject={Data='${subject}'},Body={Text={Data='${body}'}}" \
+                        --region ${AWS_REGION} \
+                        --profile myprofile // Optional: If you're using profiles
+                    """
+                }
+            }
+        }
+    }
+}
