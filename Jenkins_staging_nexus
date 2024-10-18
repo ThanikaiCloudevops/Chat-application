@@ -1,0 +1,133 @@
+pipeline {
+    agent{
+        label "krazy22-staging" // Agent Mention in Nodes 
+    }
+    tools {
+        nodejs "nvm" //Manage Jenkins > tools
+        jdk 'jdk-17' //Manage Jenkins > tools
+    }
+    environment {
+        BITBUCKET_CREDENTIALS = "FSPAPI"
+        SONAR_TOKEN = credentials("sonarscan") //Manage_jenkins>Systems>sonarqube confi
+        SCANNER_HOME = tool "sonarscanner-krazy" // manage_jenkins>tools>sonarqube confi
+        DOCKER_CREDENTIALS = credentials("dockercred") // // manage_jenkins >credentials > dockercred
+        Image_Name = "master-server" // Image name for microservices
+        // Nexus Varibales
+        NEXUS_URL = "43.204.141.212:8085" // nexus ip with mention port
+        NEXUS_Version = "nexus3" // nexus version we mention 2 or 3
+        NEXUS_PROTOCOL = "http" // we mention in docker repo http
+        NEXUS_REPOSITORY = "docker_images_repo" // nexus hosted repo name
+        NEXUS_CREDENTIALS_ID = "nexus_cred" // nexus credentails username & password
+        
+    }
+    stages {
+        stage("Checkout SCM") {
+            steps {
+                script {
+                    git(
+                        branch: 'master', // Branch in bitbucket repo
+                        credentialsId: "${BITBUCKET_CREDENTIALS}", // cred for bitbucket
+                        url: "https://SciflareIT@bitbucket.org/dpl11-backend/krazyy22_api.git" 
+                    )
+                }
+            }
+        }
+        stage("Cleanup Folder") {
+            steps {
+                script {
+                    // Remove everything except for the master-module folder
+                    sh '''
+                        find . -maxdepth 1 -type d ! -name 'master-server' ! -name '.' -exec rm -rf {} +
+                    '''
+                }
+            }
+        }
+        stage("Version Check") {
+            steps {
+                script {
+                    sh "node -v"
+                    sh "docker --version"
+                }
+            }
+        }
+        stage("Static Code Analysis") {
+            steps {
+                script {
+                    withSonarQubeEnv('sonarscan') { // Replace with your SonarQube instance name
+                    sh '''
+                        ${SCANNER_HOME}/bin/sonar-scanner \
+                        -Dsonar.host.url=http://65.1.92.45:9000/ \
+                        -Dsonar.login="${SONAR_TOKEN}" \
+                        -Dsonar.projectKey=krazy22-staging \
+                        -Dsonar.projectName=krazy22-staging \
+                        -Dsonar.java.binaries=./
+                    '''
+                    }
+                }
+            }
+        }
+        // stage("Quality Gates Checking..."){
+        //     steps{
+        //         script{
+        //             timeout(time: 1 , unit: "MINUTES"){
+        //                 def qg=waitForQualityGate()
+        //                 if(qg.status !="OK"){
+        //                     error "pipeline Aborted due to quality gate failure: ${qg.status}.Message: ${qg.description}"
+        //                 }else{
+        //                     echo "Quality Gate Passed with Status: ${qg.status}"
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+        stage("OWASP Dependency-Check") {
+            steps {
+                script {
+                    dependencyCheck additionalArguments: '--scan ./ --out . --format XML', odcInstallation: 'dp-scan'
+                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                }
+            }
+        }
+        stage("Build Docker image master-server"){
+            steps{
+                script{
+                    def buildId = "${env.BUILD_NUMBER}"
+                    // withDockerRegistry(credentialsId: 'dockercred', toolName: 'docker-kra'){ // Manage_jenkins > Tools >docker & add in credentials docker
+                        dir("/opt/jenkins/workspace/krazy22-staging/master-microservices/master-server"){
+                            sh "docker build -t ${Image_Name}:${buildId} ."
+                        }
+                    // }
+                }
+            }
+        }
+        stage("Trivy scan files and Images"){
+            steps{
+                script{
+                    sh "trivy fs ."
+                    sh "trivy image --scanners vuln ${Image_Name}:${env.BUILD_NUMBER}"
+                }
+            }
+        }
+        stage("Push Images into Nexus Repo"){
+            steps{
+                script{
+                    def buildId = "${env.BUILD_NUMBER}"
+                    def nexusImageName = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${Image_Name}:${buildId}"
+                    sh "docker login ${NEXUS_URL}"
+                    sh "docker tag ${Image_Name}:${buildId} ${NEXUS_URL}/${NEXUS_REPOSITORY}/${Image_Name}:${buildId}"
+                    sh "docker push ${NEXUS_URL}/${NEXUS_REPOSITORY}/${Image_Name}:${buildId}"
+                }
+            }
+        }
+        stage("Remove Docker images"){
+            steps{
+                script{
+                    def buildId = "${env.BUILD_NUMBER}"
+                    def nexusImageName = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${Image_Name}:${buildId}"
+                    sh "docker rmi ${nexusImageName} || true"
+                    sh "docker rmi ${Image_Name}:${buildId} || true"
+                }
+            }
+        }
+    }    
+}
