@@ -26,3 +26,27 @@ server {
     }
 }
 # And restart the nginx
+
+Using without ssl configure
+server {
+    listen 80;
+    server_name www.gooplus.in gooplus.in;
+
+    # Redirect all HTTP requests to HTTPS
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name www.gooplus.in gooplus.in;
+
+    ssl_certificate /path/to/your/certificate.pem;  # Replace with your cert path
+    ssl_certificate_key /path/to/your/privatekey.pem;  # Replace with your key path
+    ssl_trusted_certificate /path/to/your/chain.pem;  # Replace with your chain path
+
+    location / {
+        root /var/www/html;  # Change to your web root
+        index index.html index.htm;
+    }
+}
+and restart the nginx
