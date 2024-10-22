@@ -38,7 +38,20 @@ sudo nginx -t
 sudo systemctl reload nginx
 
 
+# Additinonal to be added
 
+# Check the Existing Link
+ls -l /etc/nginx/sites-enabled/
+
+# Remove the Existing Link (if needed)
+sudo rm /etc/nginx/sites-enabled/gooplus.in
+
+# Create the New Symbolic Link
+sudo ln -s /etc/nginx/sites-available/gooplus.in /etc/nginx/sites-enabled/
+
+# Test and Restart Nginx
+sudo nginx -t
+sudo systemctl restart nginx
 
 
 
