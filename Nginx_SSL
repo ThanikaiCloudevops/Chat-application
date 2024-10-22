@@ -1,0 +1,28 @@
+If Domain Name Buying in Any Other domain providers we can maintaince Hosted Zone in Route 53
+Created A Nam CName And Use ACM to issue Certified once you create Certification created Cname for AWS ACM 
+and Nameservers have to store in DNS Providers eg: Godaddy , Mistu, Namecheap updated your aws route ns-record-set 
+
+I use Nginx i didnt use application load balancers so here commands:
+# Install Certbot
+sudo apt install certbot python3-certbot-nginx
+
+# Obtain an SSL Certificate
+sudo certbot --nginx -d www.gooplus.in -d gooplus.in
+
+ # Automatic Renewal
+sudo certbot renew --dry-run
+
+# Updated config Files 
+server {
+    listen 443 ssl;
+    server_name www.gooplus.in gooplus.in;
+
+    ssl_certificate /etc/letsencrypt/live/www.gooplus.in/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/www.gooplus.in/privkey.pem;
+
+    location / {
+        root /var/www/html;  # Change to your web root
+        index index.html index.htm;
+    }
+}
+# And restart the nginx
