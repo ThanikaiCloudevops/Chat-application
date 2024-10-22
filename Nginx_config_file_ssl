@@ -1,0 +1,55 @@
+server {
+    listen 80;
+    server_name gooplus.in www.gooplus.in 3.109.208.38;  # Your domain and IP
+    return 301 https://$host$request_uri;  # Redirect all HTTP requests to HTTPS
+}
+
+server {
+    listen 443 ssl;  # SSL port
+    server_name gooplus.in www.gooplus.in 3.109.208.38;  # Your domain and IP
+    root /var/www/gooplus.in;  # Set root to the project directory
+    index src/index.html;  # Set index file
+
+    # SSL configuration
+    ssl_certificate /etc/letsencrypt/live/www.gooplus.in/fullchain.pem;  # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/www.gooplus.in/privkey.pem;  # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf;  # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;  # managed by Certbot
+
+    location / {
+        try_files $uri $uri/ /src/index.html;  # Serve files or fallback to src/index.html
+    }
+
+    # Serve static files directly (CSS, JS, images, etc.)
+    location /Images/ {
+        alias /var/www/gooplus.in/Images/;  # Serve images from the Images directory
+    }
+
+    location ~* \.(css|js|jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf)$ {
+        expires 30d;  # Cache static files for 30 days
+        access_log off;  # Optionally disable access log for static files
+    }
+
+    location ~ /\. {
+        deny all;  # Deny access to hidden files
+    }
+}
+
+# Config File location 
+sudo nano /etc/nginx/sites-available/gooplus.in
+
+# Config enable Link the Configuration sites-enabled
+sudo ln -s /etc/nginx/sites-available/gooplus.in /etc/nginx/sites-enabled/
+
+# Commands For Nginx
+sudo nginx -t
+
+# Permission Nginx
+sudo chown -R www-data:www-data /var/www/gooplus.in
+sudo chmod -R 755 /var/www/gooplus.in
+
+# Restart Nginx
+sudo systemctl restart nginx
+
+
+
