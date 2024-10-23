@@ -88,10 +88,12 @@ pipeline {
                 script{
                     sh "pwd"
                     def buildId = "${env.BUILD_NUMBER}"
+                    # def nexusImageName = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${Image_Name}:${buildId}"
                     withDockerRegistry(credentialsId: 'dockercred', toolName: 'docker-kra'){
                         dir("/opt/jenkins/workspace/krazy22-staging/contest-microservices/contests-module"){
                             sh "docker build -t ${Image_Name}:${buildId} ."
-                            
+                            # sh "docker build -t ${nexusImageName} ."
+                            # THIS WILL CREATE SEPARATE IMAGE BUILD AND TAGGED TO MODIFY THIS I COMMANDS SOME LINES 
                         }
                     }
                 }
