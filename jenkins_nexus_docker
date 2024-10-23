@@ -102,8 +102,10 @@ pipeline {
         stage("Trivy scan files and Images"){
             steps{
                 script{
+                    def nexusImageName= "${NEXUS_URL}/${NEXUS_REPOSITORY}/${Image_Name}:${buildId}"
                     sh "trivy fs ."
-                    sh "trivy image --scanners vuln ${Image_Name}:${env.BUILD_NUMBER}"
+                    sh "trivy image --scanners vuln ${nexusImageName}
+                    #sh "trivy image --scanners vuln ${Image_Name}:${env.BUILD_NUMBER}"
                 }
             }
         }
