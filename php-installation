@@ -1,0 +1,149 @@
+LAMP and Laravel project setup 
+ 
+
+Step1: Step 1 — Installing Apache and Updating the Firewall 
+
+  1a. sudo apt update 
+
+ 	1b. sudo apt install apache2 
+	1c. sudo ufw app list 
+
+1d. sudo ufw allow in "Apache" 
+
+1e. http://your_server_ip/ 
+
+ 
+Step 2 — Installing MySQL 
+           
+2a. sudo apt install mysql-server 
+
+2b. sudo mysql_secure_installation 
+
+2c. sudo mysql 
+
+Step 3 — Installing PHP 
+
+3a. sudo apt install php libapache2-mod-php php-mysql 
+
+3b. php –v 
+
+3c. sudo systemctl restart apache2 
+
+3d. sudo apt install php-cli 
+
+3e. sudo mkdir /var/www/your_domain 
+
+3f. sudo chown -R $USER:$USER /var/www/your_domain 
+
+3g. sudo nano /etc/apache2/sites-available/your_domain.conf 
+
+/etc/apache2/sites-available/your_domain.conf 
+
+etc/apache2/sites-available/your_domain.conf 
+
+<VirtualHost *:80> 
+
+    ServerName your_domain 
+
+    ServerAlias www.your_domain 
+
+    ServerAdmin webmaster@localhost 
+
+    DocumentRoot /var/www/your_domain 
+
+    ErrorLog ${APACHE_LOG_DIR}/error.log 
+
+    CustomLog ${APACHE_LOG_DIR}/access.log combined 
+
+</VirtualHost> 
+
+ 
+
+3h. sudo a2ensite your_domain 
+
+3i. sudo apache2ctl configtest 
+
+3j. sudo systemctl reload apache2 
+
+Step:4 - Downloading and Installing Composer 
+
+    4a.cd ~ 
+
+    4b. curl -sS https://getcomposer.org/installer -o /tmp/composer-setup.php 
+
+    4c. HASH=`curl -sS https://composer.github.io/installer.sig` 
+
+    4d. Composer 
+
+ 
+
+Step:5 – clone taken in the root path of the apache2 
+ 
+step:6 – composer install in project folder  
+ 
+step:7 – provide the permission and link the storage folder in it via the following commands 
+ 
+   7a. sudo chmod -R 775 storage 
+   7b. sudo chown -R $USER:www-data storage 
+   7c.  sudo chmod -R 775 bootstrap/cache 
+   7d. sudo chown -R $USER:www-data bootstrap/cache 
+
+   7e. php artisan storage:link 
+
+ 
+step:8 – If change anything in .env or src , cclear the cache  
+ 
+    8a. php artisan cache:clear 
+    8b. php artisan config:clear 
+    8c.  php artisan route:clear 
+
+ 
+##php Dockerfile
+# Use the official PHP image as base
+FROM php:7.4-fpm
+
+# Set working directory inside the container
+WORKDIR /var/www/html
+
+# Install dependencies
+RUN apt-get update && apt-get install -y \
+    git \
+    curl \
+    libpng-dev \
+    libjpeg-dev \
+    libfreetype6-dev \
+    libzip-dev \
+    zip \
+    unzip
+
+# Install PHP extensions
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd pdo pdo_mysql zip
+
+# Install Composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# Copy composer files and install dependencies
+COPY composer.json composer.lock ./
+RUN composer install --no-scripts --no-autoloader
+
+# Copy the rest of the application
+COPY . .
+
+# Set permissions
+RUN chown -R www-data:www-data /var/www/html
+RUN chmod -R 755 /var/www/html/storage
+
+# Generate autoload files
+RUN composer dump-autoload --no-scripts --no-dev --optimize
+
+# Expose port 9000 to communicate with PHP-FPM
+EXPOSE 9000
+
+# Start PHP-FPM server
+CMD ["php-fpm"]
+ 
+
+ 
+
+ 
