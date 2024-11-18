@@ -1,0 +1,45 @@
+server {
+    listen 80;
+    server_name gooplus.in www.gooplus.in;  # Your domain and IP
+    return 301 https://$host$request_uri;  # Redirect all HTTP requests to HTTPS
+}
+
+server {
+    listen 443 ssl;  # SSL port
+    server_name gooplus.in www.gooplus.in;  # Your domain and IP
+    root /var/www/gooplus.in;  # Set root to the project directory
+    index src/index.html;  # Set index file
+
+    # SSL configuration
+    ssl_certificate /etc/letsencrypt/live/www.gooplus.in/fullchain.pem;  # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/www.gooplus.in/privkey.pem;  # managed by Certbot
+    include /etc/letsencrypt/options-ssl-nginx.conf;  # managed by Certbot
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;  # managed by Certbot 
+
+    # Serve .well-known files correctly
+    location ^~ /.well-known/ {
+        root /var/www/gooplus.in;  # Set the root to the website folder
+        allow all;  # Allow all access to the .well-known directory
+    }
+
+    # Main location block for your site
+    location / {
+        try_files $uri $uri/ /src/index.html;  # Serve files or fallback to src/index.html
+    }
+
+    # Serve images and other static files
+    location /Images/ {
+        alias /var/www/gooplus.in/Images/;  # Serve images from the Images directory
+    }
+
+    # Cache static files
+    location ~* \.(css|js|jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf)$ {
+        expires 30d;  # Cache static files for 30 days
+        access_log off;  # Optionally disable access log for static files
+    }
+
+    # Deny access to hidden files (like .git, .env, etc.)
+    location ~ /\. {
+        deny all;  # Deny access to hidden files
+    }
+}
