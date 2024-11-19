@@ -1,0 +1,44 @@
+#Create Ebs Partition for AWS EC2 instance
+You Need to Create EBS Volume for Region and Attach to correct Ec2 instance
+
+#Commands :
+lsblk
+sudo fdisk -l /dev/xvda
+
+1.sudo fdisk /dev/xvdb
+Command (m for help): n
+Partition type: p (default)
+Partition number: 1 (default)
+First sector: (press Enter to use the default)
+Last sector: +2G
+
+# After partitioning, you need to format each partition with a filesystem (ext4 in this case).
+# Format /opt partition
+
+sudo mkfs.ext4 /dev/xvdb1
+
+sudo mkdir /opt
+
+#sudo mkdir /home
+#sudo mkdir /app
+#sudo mkdir /tmp
+
+# Now, mount each partition to the appropriate directory:
+sudo mount /dev/xvdb1 /opt
+
+and use commands for checking '
+df -h
+
+
+checking 
+lsblk
+output: 
+    NAME    MAJ:MIN RM   SIZE RO TYPE MOUNTPOINT
+xvda    202:0    0   20G  0 disk
+├─xvda1 202:1    0    1G  0 part /opt
+├─xvda2 202:2    0    2G  0 part /home
+├─xvda3 202:3    0   10G  0 part /app
+└─xvda4 202:4    0    2G  0 part /tmp
+
+
+
