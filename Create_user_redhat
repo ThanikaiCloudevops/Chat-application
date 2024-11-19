@@ -1,0 +1,23 @@
+# Taking private key into pub key 
+ssh-keygen -y -f dream11.pem > dream11.pub
+
+# Add configure in server 
+sudo mkdir -p /home/thanikai/.ssh
+sudo chown thanikai:thanikai /home/thanikai/.ssh
+sudo chmod 700 /home/thanikai/.ssh
+sudo touch /home/thanikai/.ssh/authorized_keys
+sudo chown thanikai:thanikai /home/thanikai/.ssh/authorized_keys
+sudo chmod 600 /home/thanikai/.ssh/authorized_keys
+
+#Before that 
+create user - sudo useradd Thanikai
+sudo passwd - (hefsg)
+
+su -i
+
+# Come outside of login use this commands to copy public into authoried key 
+cat dream11.pub | ssh -i dream11.pem ec2-user@3.110.176.108 "sudo tee -a /home/thanikai/.ssh/authorized_keys"
+
+# Then Login into 
+ssh -i dream11.pem thanikai@3.110.176.108
+ ## This is an key based auth  , CREATE USER () AND SET PASSWORD AND CREATE .SSH FILE AND AUTH FILE THEN COPY THE PUBLIC KEY INTO THE USER AND LOGIN THE PARTICULAR USER
