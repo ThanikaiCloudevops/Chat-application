@@ -1,0 +1,36 @@
+# Cake php 
+<VirtualHost *:80>
+    # Server Admin email address (optional)
+    ServerAdmin webmaster@localhost
+
+    # Set the ServerName to your domain or IP address (replace with your actual IP address or domain)
+    ServerName 3.108.197.78
+
+    # Set the DocumentRoot to the root directory of your CakePHP application
+    DocumentRoot /var/www/html/gooplus-admin
+
+    # Allow overriding with .htaccess files and follow symlinks
+    <Directory /var/www/html/gooplus-admin>
+        Options FollowSymLinks
+        AllowOverride All
+        Require all granted
+    </Directory>
+
+    # Error logs (optional)
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined
+
+    # Enable URL rewriting for CakePHP (ensure mod_rewrite is enabled)
+    RewriteEngine On
+
+    # Rewrite root URL to webroot
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^(.*)$ /webroot/$1 [L]
+
+    # Security: Disable access to .htaccess files and other hidden files
+    <FilesMatch "^\.">
+        Require all denied
+    </FilesMatch>
+    
+</VirtualHost>
