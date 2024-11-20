@@ -1,0 +1,8 @@
+#Commands
+hostnamectl
+#Set hostname 
+sudo hostnamectl set-hostname ds-mmdevb01
+Checkhost name
+sudo nano /etc/hostname
+
+sudo systemctl restart systemd-hostnamed
