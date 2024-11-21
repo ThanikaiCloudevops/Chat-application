@@ -1,0 +1,11 @@
+sudo mysql -u root -p
+
+SELECT user, host FROM mysql.user;
+CREATE USER 'goo-plus'@'localhost' IDENTIFIED WITH mysql_native_password BY 'Goo-plusdb@123!';
+GRANT ALL PRIVILEGES ON `goo-plus`.* TO 'goo-plus'@'localhost';
+FLUSH PRIVILEGES;
+SHOW GRANTS FOR 'goo-plus'@'localhost';
+EXIT;
+mysql -u goo-plus -p
+mysql -u goo-plus -p goo-plus < /var/www/html/gooplus-admin/goo-plus-backup.sql
+Check it is working or not
