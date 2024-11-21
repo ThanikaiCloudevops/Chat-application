@@ -1,0 +1,13 @@
+# Take Dump file from databases
+mysqldump -u goo-plus -p --host=localhost goo-plus > goo-plus-backup.sql
+
+#Copy to Local in your dest
+scp -i /path/to/your-key.pem ubuntu@<EC2-PUBLIC-IP>:/path/to/your/file/goo-plus-backup.sql /path/to/local/destination
+
+# NOw transfer file to your server Dest 
+scp -i Goo-plus.pem ~/Downloads/goo-plus-backup.sql ubuntu@3.108.197.78:/path/to/destination/directory/
+
+# Now copy ubuntu to the root dest 
+sudo cp /home/ubuntu/goo-plus-backup.sql /var/www/html/gooplus-admin/
+#################################################################
+#Another way is server to server copy our file ............
