@@ -14,4 +14,10 @@ use pip -help to check whether pip is installed or not
 Next step create virtual env for Ansible server 
 
 To install pip virtual env commands 
-- > 
+- > sudo apt install python3.11-venv
+-> or virtualenv (NameOfEnv)
+-> python3.11 -m  venv (NameOfEnv)
+# Use to activate the commaand 
+-> source ansible(NameOfEnv)/bin/activate
+# And install Ansible Package Now 
+
