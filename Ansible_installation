@@ -1,0 +1,17 @@
+# Creating Server and install ansible for insternal purpose for a devops 
+i Created Sevrer in debain and i login into debain server using commands called
+[ssh -i KeyName.pem admin@ip-address ]
+
+Install Python3 using commands
+{This is installastion is the best practice of ansible installing in the server for devops internal}
+before that i have went to /home/admin
+
+-> sudo apt update
+-> sudo apt install -u python3.9
+-> sudo apt install python3-pip
+-> python3 --version {check python version}
+use pip -help to check whether pip is installed or not
+Next step create virtual env for Ansible server 
+
+To install pip virtual env commands 
+- > 
