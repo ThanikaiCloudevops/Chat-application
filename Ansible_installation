@@ -19,5 +19,26 @@ To install pip virtual env commands
 -> python3.11 -m  venv (NameOfEnv)
 # Use to activate the commaand 
 -> source ansible(NameOfEnv)/bin/activate
+# If you want to deactivate means simple use commands
+-> deacttivate
 # And install Ansible Package Now 
+-> pip install ansible
+(Check ansible Version)
+-> ansible --version
+# And we need to install Ansible-galaxy
+use -> ansible-galaxy --version 
+# And use commands -> ansible-galaxy list
+There will show two type
+      -> ansible galaxy collection
+      -> ansible galaxy role
 
+
+
+
+
+
+
+
+#### Reason :  For Using Ansible Via python security purpose and using for multi purpose like patching managing 
+automation workloads and if other devops engineer cant control the ansible only we i need to activate the 
+python env files 
