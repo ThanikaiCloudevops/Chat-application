@@ -201,3 +201,302 @@ pipeline {
         }
     }
 }
+
+# Realtime MOnolothic approch in Mircorservices
+
+pipeline {
+    agent {
+        label "krazy22-dev"
+    }
+    tools {
+        nodejs "nvm"
+    }
+    environment {
+        BITBUCKET_CREDENTIALS = "FSPAPI"
+        SONAR_TOKEN = credentials("sonarscan")
+        SCANNER_HOME = tool "sonarscanner-krazy"
+        DOCKER_CREDENTIALS = credentials("dockercred")
+        AWS_CREDENTIALS_ID = "ses_notification"
+        AWS_REGION = "ap-south-1"
+        
+    }
+    stages{
+        stage("Checkout SCM"){
+            steps{
+                 script{
+                    git (
+                        branch: "developed-master",
+                        url: "https://SciflareIT@bitbucket.org/dpl11-backend/krazyy22_api.git",
+                        credentialsId: "${BITBUCKET_CREDENTIALS}"
+                    )
+                }
+            }
+        }
+        stage("Static Code Analysis") {
+            steps {
+                script {
+                    withSonarQubeEnv('sonarscan') { // Replace with your SonarQube instance name
+                    echo "SCANNER_HOME: ${SCANNER_HOME}"
+                    sh '''
+                        ${SCANNER_HOME}/bin/sonar-scanner  \
+                        -Dsonar.host.url=http://65.1.92.45:9000/ \
+                        -Dsonar.login="${SONAR_TOKEN}" \
+                        -Dsonar.projectKey=krazy22-dev \
+                        -Dsonar.projectName=krazy22-dev \
+                        -Dsonar.java.binaries=./
+                    '''
+                    }
+                }
+            }
+        }
+        // stage("Quality Gate Check") {
+        //     steps {
+        //         script {
+        //             timeout(time: 1, unit: "MINUTES"){
+        //                 def qg = waitForQualityGate()
+        //                 if (qg.status !="OK"){
+        //                     error "pipeline Aborted due to quality gate failure: ${qg.status}.Message: ${qg.description}"
+        //                 }else {
+        //                     echo "Quality Gate Passed with Status: ${qg.status}"
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+        stage("OWASP Dependency-Check") {
+            steps {
+                script {
+                    dependencyCheck additionalArguments: '--scan ./ --out . --format XML', odcInstallation: 'dp-scan'
+                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml'
+                }
+            }
+        }
+        stage("Cleanup Existing Old Containers and Images") {
+            steps {
+                script {
+                    def containers = [
+                        "contest-container", "cron-container", "Game-container", "master-data-container",
+                        "scorecard-container", "user-auth-container", 
+                        "user-container", "wallet-container", "Master-container"
+                    ]
+                    def images = [
+                        "contests-module", "cron-module", "game-module", "master-data-module",
+                        "scorecard-module", "user-auth-module", "user-module", 
+                        "wallet-module", "master-module"
+                    ]
+                    def hasContainers = false
+                    def hasImages = false
+                    // Check if any containers exist and remove them
+                    containers.each { container -> 
+                        catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                            def exists = sh(script: "docker ps -aq --filter 'name=${container}\$'", returnStdout: true).trim()
+                            echo "Container check for ${container}: ${exists}"
+                            if (exists) {
+                                hasContainers = true
+                                // Remove the container if it exists
+                                sh "docker rm -f ${exists}"
+                                echo "Removed container: ${exists}"
+                            }
+                        }
+                    }
+                    def oldBuildId = currentBuild.id.toInteger() - 1
+                    echo "Looking for images tagged with build ID: ${oldBuildId}"
+                    images.each { image ->
+                        def imageToRemove = "${image}:${oldBuildId}" // Construct image name with build ID
+                        catchError(buildResult: 'SUCCESS', stageResult: 'SUCCESS') {
+                            def exists = sh(script: "docker images -q ${imageToRemove}", returnStdout: true).trim()
+                            echo "Image check for ${imageToRemove}: ${exists}"
+                            if (exists) {
+                                hasImages = true
+                                // Remove the image if it exists
+                                sh "docker rmi -f ${exists}"
+                                echo "Removed image: ${exists}"
+                            }
+                        }
+                    }
+                    if (!hasContainers && !hasImages) {
+                        echo "No containers or images to remove."
+                    }
+                }
+            }
+        }
+        stage("Build Contests-Module and run container"){
+            steps{
+                script{
+                    def build_Id="${env.BUILD_NUMBER}"
+                    def containerName = "contest-container"
+                    def Image_Name = "contests-module"
+                    withDockerRegistry(credentialsId: 'dockercred' , toolName: 'docker-kra'){
+                        dir("/opt/jenkins/workspace/Krazy22_dev/contests-module"){
+                            sh "docker build -t ${Image_Name}:${build_Id} ."
+                            sh "docker run -d --name ${containerName} -p 5002:5002 ${Image_Name}:${env.BUILD_NUMBER}"
+                            sh "docker tag ${Image_Name}:${build_Id} sciflare/${Image_Name}:${build_Id}"
+                            sh "docker push sciflare/${Image_Name}:${build_Id}"
+                        }
+                    } 
+                }
+            }
+            post{
+                success{
+                    echo "Archiving the build"
+                    emailext attachLog: true, body: 'Congratulation Your Build is success', subject: 'success build', to: 'itsupport@sciflare.com'
+                }
+                failure{
+                    emailext body: "Sorry your build is failed" , subject: "failure build" , to: "thanikaichandran.cj@sciflare.com"
+                }
+            }
+        }
+        stage("Build Cron-Module and run container"){
+            steps{
+                script{
+                  def build_Id="${env.BUILD_NUMBER}"
+                  def containerName = "cron-container"
+                  def Image_Name = "cron-module"
+                  withDockerRegistry(credentialsId: 'dockercred', toolName: 'docker-kra'){
+                        dir("/opt/jenkins/workspace/Krazy22_dev/cron-module"){
+                            sh "docker build -t ${Image_Name}:${build_Id} ."
+                            sh "docker run -d --name ${containerName} -p 5100:5100 ${Image_Name}:${env.BUILD_NUMBER}"
+                            sh "docker tag ${Image_Name}:${build_Id} sciflare/${Image_Name}:${build_Id}"
+                            sh "docker push sciflare/${Image_Name}:${build_Id}"
+                        }
+                    } 
+                }
+            }
+        }
+        stage("Build Game-Module and run container") {
+            steps {
+                script {
+                    def build_Id = "${env.BUILD_NUMBER}"
+                    def containerName = "Game-container"
+                    def Image_Name = "game-module" // Fixed syntax here
+                    withDockerRegistry(credentialsId: 'dockercred', toolName: 'docker-kra') {
+                        dir("/opt/jenkins/workspace/Krazy22_dev/game-module") {
+                            sh "docker build -t ${Image_Name}:${build_Id} ."
+                            sh "docker run -d --name ${containerName} -p 5001:5001 ${Image_Name}:${build_Id}"
+                            sh "docker tag ${Image_Name}:${build_Id} sciflare/${Image_Name}:${build_Id}"
+                            sh "docker push sciflare/${Image_Name}:${build_Id}"
+                        }
+                    } 
+                }
+            }
+        }
+        stage("Build Master-data-Module and run container"){
+            steps{
+                script{
+                    def build_Id="${env.BUILD_NUMBER}"
+                    def containerName = "master-data-container"
+                    def Image_Name = "master-data-module"
+                    withDockerRegistry(credentialsId: 'dockercred', toolName: 'docker-kra'){
+                        dir("/opt/jenkins/workspace/Krazy22_dev/master-data-module"){
+                            sh "docker build -t ${Image_Name}:${build_Id} ."
+                            sh "docker run -d --name ${containerName} -p 5008:5008 ${Image_Name}:${env.BUILD_NUMBER}"
+                            sh "docker tag ${Image_Name}:${build_Id} sciflare/${Image_Name}:${build_Id}"
+                            sh "docker push sciflare/${Image_Name}:${build_Id}"
+                        }
+                    } 
+                }
+            }
+        }
+        stage("Build ScoreCard-Module and run container"){
+            steps{
+                script{
+                    def build_Id="${env.BUILD_NUMBER}"
+                    def containerName = "scorecard-container"
+                    def Image_Name = "scorecard-module"
+                    withDockerRegistry(credentialsId: 'dockercred' , toolName: 'docker-kra'){
+                        dir("/opt/jenkins/workspace/Krazy22_dev/scorcard-contest-module"){
+                            sh "docker build -t ${Image_Name}:${build_Id} ."
+                            sh "docker run -d --name ${containerName} -p 4000:4000 ${Image_Name}:${env.BUILD_NUMBER}"
+                            sh "docker tag ${Image_Name}:${build_Id} sciflare/${Image_Name}:${build_Id}"
+                            sh "docker push sciflare/${Image_Name}:${build_Id}"
+                        }
+                    } 
+                }
+            }
+        }
+        stage("Build User-auth-Modules and run container"){
+            steps{
+                script{
+                    def build_Id="${env.BUILD_NUMBER}"
+                    def containerName = "user-auth-container"
+                    def Image_Name = "user-auth-module"
+                    withDockerRegistry(credentialsId: 'dockercred' , toolName: 'docker-kra'){
+                        dir("/opt/jenkins/workspace/Krazy22_dev/user-auth-module"){
+                            sh "docker build -t ${Image_Name}:${build_Id} ."
+                            sh "docker run -d --name ${containerName} -p 5000:5000 ${Image_Name}:${env.BUILD_NUMBER}"
+                            sh "docker tag ${Image_Name}:${build_Id} sciflare/${Image_Name}:${build_Id}"
+                            sh "docker push sciflare/${Image_Name}:${build_Id}"
+                        }
+                    }      
+                }
+            }
+        }
+        stage("Build User-Modules and run container"){
+            steps{
+                script{
+                    def build_Id="${env.BUILD_NUMBER}"
+                    def containerName = "user-container"
+                    def Image_Name = "user-module"
+                    withDockerRegistry(credentialsId: 'dockercred',toolName: 'docker-kra'){
+                        dir("/opt/jenkins/workspace/Krazy22_dev/user-module"){
+                            sh "docker build -t ${Image_Name}:${build_Id} ."
+                            sh "docker run -d --name ${containerName} -p 5004:5004 ${Image_Name}:${env.BUILD_NUMBER}"
+                            sh "docker tag ${Image_Name}:${build_Id} sciflare/${Image_Name}:${build_Id}"
+                            sh "docker push sciflare/${Image_Name}:${build_Id}"
+                        }
+                    }      
+                }
+            }
+        }
+        stage("Build wallet-Module and run container"){
+            steps{
+                script{
+                    def build_Id="${env.BUILD_NUMBER}"
+                    def containerName = "wallet-container"
+                    def Image_Name = "wallet-module"
+                    withDockerRegistry(credentialsId: 'dockercred' , toolName: 'docker-kra'){
+                        dir("/opt/jenkins/workspace/Krazy22_dev/wallet-module"){
+                            sh "docker build -t ${Image_Name}:${build_Id} ."
+                            sh "docker run -d --name ${containerName} -p 5005:5005 ${Image_Name}:${env.BUILD_NUMBER}"
+                            sh "docker tag ${Image_Name}:${build_Id} sciflare/${Image_Name}:${build_Id}"
+                            sh "docker push sciflare/${Image_Name}:${build_Id}"
+                        }
+                    }      
+                }
+            }
+        }
+        stage("Build Master-Module and run container") {
+            steps {
+                script {
+                    def build_Id = "${env.BUILD_NUMBER}"
+                    def containerName = "Master-container"
+                    def Image_Name = "master-module"
+                    withDockerRegistry(credentialsId: 'dockercred', toolName: 'docker-kra') {
+                        dir("/opt/jenkins/workspace/Krazy22_dev/master-server") {
+                            sh "docker build -t ${Image_Name}:${build_Id} ."
+                            sh "docker run -d --name ${containerName} -p 3000:3000 ${Image_Name}:${build_Id}"
+                            sh "docker tag ${Image_Name}:${build_Id} sciflare/${Image_Name}:${build_Id}"
+                            sh "docker push sciflare/${Image_Name}:${build_Id}"
+                        }
+                    }
+                }
+            }
+        }
+    }
+    post {
+        success {
+            emailext attachLog: true,
+                      body: 'Krazzy build is successful. All modules built correctly.',
+                      subject: 'Jenkins Build For Krazzy - Success',
+                      to: 'androidteam@sciflare.com'
+        }
+        failure {
+            emailext attachLog: true,
+                      body: 'Krazzy build has failed. Please check the logs for details.',
+                      subject: 'Jenkins Build Failed For Krazzy',
+                      to: 'androidteam@sciflare.com'
+        }
+    }
+}
+
+
