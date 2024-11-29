@@ -89,6 +89,31 @@ apachectl configtest
 sudo systemctl restart apache2
 
 
+Http to Https Traffic Flow Installation
+
+# Apache2 ssl
+-> sudo apt update
+-> sudo apt install openssl
+
+-> sudo apt install certbot python3-certbot-apache
+-> sudo certbot --apache
+
+# Generate a Private Key and CSR (Certificate Signing Request)
+-> openssl genpkey -algorithm RSA -out /etc/ssl/private/mydomain.key -aes256
+-> openssl req -new -key /etc/ssl/private/mydomain.key -out /etc/ssl/certs/mydomain.csr
+
+# Nginx ssl
+-> sudo apt update
+-> sudo apt install certbot python3-certbot-nginx
+-> sudo certbot --nginx
+
+-> sudo certbot renew --dry-run
+
+
+Comman commands 
+-> dig (websitename)
+-> nslookup (websitename)
+
 
 
 
