@@ -3,13 +3,13 @@
 echo "Current Dir"
 pwd
 echo "contents of jenkins workspace "
-sudo ls -alh /opt/jenkins/workspace/sciflare-website/
+sudo ls -alh /opt/jenkins/workspace/(ApplicationName)website/
 
 echo "Contents of apache2 httpd"
 sudo ls -alh /var/www/sciflare-website/
 
-echo "Copying Files from jenkins workspace to /var/www/sciflare-website"
-sudo cp -r /opt/jenkins/workspace/sciflare-website/* /var/www/sciflare-website/
+echo "Copying Files from jenkins workspace to /var/www/(ApplicationName)-website"
+sudo cp -r /opt/jenkins/workspace/sciflare-website/* /var/www/(ApplicationName)sciflare-website/
 
 echo "Reloading Apache to serve content"
 sudo systemctl reload apache2
