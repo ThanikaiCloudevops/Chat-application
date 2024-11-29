@@ -34,3 +34,29 @@
     </FilesMatch>
     
 </VirtualHost>
+
+###################### OR #####################
+
+<VirtualHost *:80>
+    ServerAdmin webmaster@localhost
+    ServerName 3.108.197.78
+    DocumentRoot /var/www/gooplus-admin/webroot
+    <Directory /var/www/gooplus-admin/webroot>
+        AllowOverride All
+        Require all granted
+    </Directory>
+    ErrorLog ${APACHE_LOG_DIR}/error.log
+    CustomLog ${APACHE_LOG_DIR}/access.log combined    
+</VirtualHost>
+
+
+
+
+
+
+
+
+
+
+
+
