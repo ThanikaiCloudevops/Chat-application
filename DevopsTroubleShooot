@@ -1,0 +1,21 @@
+# The error you're encountering indicates that the bcrypt module is trying to load a shared library (libc.musl-x86_64.so.1), but it cannot find it. 
+# This is a common issue when running Node.js applications that use native modules in environments with minimal libraries, such as Alpine Linux.
+
+FROM node:14-buster
+
+# I Faced error in Cakephp -> i pull the code and deploy website and logo working but admin panel is not working i checked for past two and i find the solution 
+i need to check mysql database and i hvae to give access to that ip to access database and each ip contains one user if ip changes we need to create user into
+ the database and give privelages to user 
+
+# I Faced Same error via connect to Http to https -> It is so simple we need to install all dependencies for certification in apache2 or nginx and it wil create
+automatically ssl configure file your have to mention your ip addr in Route53 where you manitain yout nameserver - NS record sets and we have to mention instead of 
+ip addr ServerName in apache2 - confi file in Nginx also and [ Check in application code also ]
+
+# Jenkins SSH connecting with Agent problem -> Sometime you create key and copy key into jenkins credentials and public key copy into authorized_keys but connect 
+would fails REASON -> why means check the username of credentials you give in (ssh-username-private) they have incorrect check username set as "root" if you want custom Name 
+you can create and add into sudo access
+
+# If Your partition Ebs volume to cant login into Server -> You Have format properly once you partition is completed and use command "sudo reboot" and go to aws or azure 
+use to reboot the server
+
+# When You Setup Ci/Cd pipeline - You Face issue Via Intergate Mutli Tools like sonarqube ,Trivy ,Nexus ,Jenkins and Docker 
