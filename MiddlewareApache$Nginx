@@ -1,3 +1,7 @@
+{
+## Nginx Installation 
+}
+
 # For Ubuntu 
 sudo apt update
 # Install Nginx
@@ -52,6 +56,49 @@ sudo ln -s /etc/nginx/sites-available/gooplus.in /etc/nginx/sites-enabled/
 # Test and Restart Nginx
 sudo nginx -t
 sudo systemctl restart nginx
+
+# Configuration File location
+cd /etc/nginx/sites-avaiable/NameOfConfigurationFile
+
+{
+##Apache2 Installation 
+}
+
+-> sudo apt update
+
+# Install Apache
+sudo apt install apache2
+
+# Start Apache Service
+sudo systemctl start apache2
+
+# Enable Apache to Start on Boot
+sudo systemctl enable apache2
+
+# Check Apache Status
+sudo systemctl status apache2
+
+#  Allow HTTP Traffic Through the Firewall 
+sudo ufw allow 'Apache Full'
+
+# COnfigure File Location
+cd /etc/apache2/sites-avaiable/NameOfConigurtionFile
+
+# Test apache2 Configure File
+apachectl configtest
+sudo systemctl restart apache2
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
