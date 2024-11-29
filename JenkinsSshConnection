@@ -1,0 +1,18 @@
+# Yes, that's correct! If you create the ansible (or ansibledevopsint) user, give it the proper SSH key configuration, and add it to the sudo group,
+it should allow Jenkins to connect to the server using that user.
+
+# You're asking why the connection works when you use root as the username in Jenkins, but not when you use ansibledevopsint or any non-root user
+
+INSTEAD WE CAN DO ONE SOLUTION !!!
+ # Add User name and password for Ansible
+-> sudo useradd ansible
+-> sudo passwd ansible
+
+# Set Up SSH Key-Based Authentication for ansible
+-> sudo mkdir -p /home/ansible/.ssh
+-> sudo chmod 700 /home/ansible/.ssh
+-> sudo chown ansible:ansible /home/ansible/.ssh
+#  Add the ansible User to the sudo Group
+-> sudo usermod -aG sudo ansible
+# Verify sudo Access
+-> sudo -u ansible sudo ls /root
