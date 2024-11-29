@@ -1,0 +1,19 @@
+# Git commands for creating empty branches in local to repo 
+ -> git init
+ -> git checkout --orphan <#branch_name>
+ -> git rm -rf .
+ -> git commit --allow-empty -m "Inital empty branch in repo"
+ -> git push origin <#branch_name>
+
+The error "fatal: refusing to merge unrelated histories"
+solution : git pull origin branch-name --allow-unrelated-histories
+
+-> git Push Origin (BranchName)
+-> git pull origin (BranchName)
+-> git status (See status of commit)
+-> git checkout  (Change Branch)
+-> git add (file name or . /everything)
+-> git branch -r (see what branch in hide)
+-> git fetch origin (fetch all the code)
+-> git stash (untracked or hold the present commits)
+-> git clean -fd (Cleaning up file and dire)
