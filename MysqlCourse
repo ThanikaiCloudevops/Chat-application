@@ -6,6 +6,28 @@ GRANT ALL PRIVILEGES ON `goo-plus`.* TO 'goo-plus'@'localhost';
 FLUSH PRIVILEGES;
 SHOW GRANTS FOR 'goo-plus'@'localhost';
 EXIT;
+
 mysql -u goo-plus -p
 mysql -u goo-plus -p goo-plus < /var/www/html/gooplus-admin/goo-plus-backup.sql
 Check it is working or not
+
+Showing user :
+SELECT user, host FROM mysql.user WHERE user = 'goo-plus';
+############# 
+# mysql -u goo-plus -p -h 43.205.242.209 # connecting with host
+
+-- Step 1: Create or alter the user with the correct password
+CREATE USER 'goo-plus'@'52.66.203.61' IDENTIFIED BY 'Goo-plusdb@123!';
+
+-- Step 2: Grant privileges to the user
+GRANT ALL PRIVILEGES ON `goo-plus`.* TO 'goo-plus'@'ip-address';
+
+-- Step 3: Apply the changes
+FLUSH PRIVILEGES;
+
+-- Step 4: Verify the grants
+SHOW GRANTS FOR 'goo-plus'@'ip-address';
+
+#############
+Upcoming Mysql Querys and commands Keep Learning.........!
+
