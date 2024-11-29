@@ -4,22 +4,29 @@
 
 # For Ubuntu 
 sudo apt update
+
 # Install Nginx
 sudo apt install nginx
+
 # Start and Eable Nginx
 sudo systemctl start nginx
 sudo systemctl enable nginx
+
 # Adjust Firewall Settings (if applicable)
 sudo ufw allow 'Nginx Full'
+
 # Check Nginx Status 
 sudo systemctl status nginx
 # Create a Directory for Your Website
 sudo mkdir -p /var/www/gooplus.in/html
+
 # Set Permissions
 sudo chown -R $USER:$USER /var/www/gooplus.in/html
 sudo chmod -R 755 /var/www
+
 # Create an Nginx Server Block
 sudo nano /etc/nginx/sites-available/gooplus.in
+
  Code for nginx 
 server {
     listen 80;
