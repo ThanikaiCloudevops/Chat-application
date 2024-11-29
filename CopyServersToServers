@@ -11,3 +11,7 @@ scp -i Goo-plus.pem ~/Downloads/goo-plus-backup.sql ubuntu@3.108.197.78:/path/to
 sudo cp /home/ubuntu/goo-plus-backup.sql /var/www/html/gooplus-admin/
 #################################################################
 #Another way is server to server copy our file ............
+
+scp -i /path/to/private_key ubuntu@98.80.198.31:/var/www/html/boomer11_dev.sql ~/Downloads/ # Downloads inside server to local
+
+scp -i /path/to/your/private-key.pem /path/to/local/file username@remote-host:/path/to/remote/destination/ # Copying Local to Remote Reposiory
