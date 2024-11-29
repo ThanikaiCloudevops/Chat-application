@@ -1,0 +1,155 @@
+{
+# SingleMicroservices (Nodejs )
+}
+pipeline {
+    agent{
+        label "krazy22-staging"
+    }
+    tools {
+        nodejs "nvm"
+        jdk 'jdk-17'
+    }
+    environment {
+        BITBUCKET_CREDENTIALS = "FSPAPI"
+        SONAR_TOKEN = credentials("sonarscan")
+        SCANNER_HOME = tool "sonarscanner-krazy" 
+        DOCKER_CREDENTIALS = credentials("dockercred")
+        Image_Name = "contests-module"
+        NEXUS_URL = "43.204.141.212:8085"
+        NEXUS_Version = "nexus3"
+        NEXUS_PROTOCOL = "http"
+        NEXUS_REPOSITORY = "docker_images_repo"
+        NEXUS_CREDENTIALS_ID = "nexus_cred"
+    }
+    stages {
+        stage("Checkout SCM") {
+            steps {
+                script {
+                    git(
+                        branch: 'staging-master',
+                        credentialsId: "${BITBUCKET_CREDENTIALS}",
+                        url: "https://SciflareIT@bitbucket.org/dpl11-backend/krazyy22_api.git"
+                    )
+                }
+            }
+        }
+        stage("Version Check and Cleanup") {
+            steps {
+                script {
+                    sh "node -v"
+                    sh "docker --version"
+                    sh "trivy --version"
+                    sh '''
+                        find . -maxdepth 1 -type d ! -name 'contests-module' ! -name '.' -exec rm -rf {} +
+                    '''
+                }
+            }
+        }
+        stage("Static Code Analysis") {
+            steps {
+                script {
+                    withSonarQubeEnv('sonarscan') { // Replace with your SonarQube instance name
+                    sh '''
+                        ${SCANNER_HOME}/bin/sonar-scanner \
+                        -Dsonar.host.url=http://65.1.92.45:9000/ \
+                        -Dsonar.login="${SONAR_TOKEN}" \
+                        -Dsonar.projectKey=krazy22-staging \
+                        -Dsonar.projectName=krazy22-staging \
+                        -Dsonar.java.binaries=./
+                    '''
+                    }
+                }
+            }
+        }
+        // stage("Quality Gates Checking..."){
+        //     steps{
+        //         script{
+        //             timeout(time: 1 , unit: "MINUTES"){
+        //                 def qg=waitForQualityGate()
+        //                 if(qg.status !="OK"){
+        //                     error "pipeline Aborted due to quality gate failure: ${qg.status}.Message: ${qg.description}"
+        //                 }else{
+        //                     echo "Quality Gate Passed with Status: ${qg.status}"
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+        stage("OWASP Dependency-Check") {
+            steps {
+                script {
+                    dependencyCheck additionalArguments: '--scan ./ --out . --format XML', odcInstallation: 'dp-scan'
+                    dependencyCheckPublisher pattern: '**/dependency-check-report.xml',
+                                           health: 'low', // or 'medium'/'high'
+                                           unhealthy: 'high', // or specify thresholds
+                                           failure: 'critical'
+                }
+            }
+        }
+        stage("Build Docker image contest-module"){
+            steps{
+                script{
+                    sh "pwd"
+                    def buildId = "${env.BUILD_NUMBER}"
+                    def nexusImageName = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${Image_Name}:${buildId}"
+                    withDockerRegistry(credentialsId: 'dockercred', toolName: 'docker-kra'){
+                        dir("/opt/jenkins/workspace/krazy22-staging/contest-microservices/contests-module"){
+                            sh "docker build -t ${nexusImageName} ."
+                            
+                        }
+                    }
+                }
+            }
+        }
+        stage("Trivy scan files and Images"){
+            steps{
+                script{
+                    def buildId = "${env.BUILD_NUMBER}"
+                    def nexusImageName = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${Image_Name}:${buildId}"
+                    sh "trivy fs ."
+                    sh "trivy image --scanners vuln ${nexusImageName}"
+                }
+            }
+        }
+        stage("Push Images into Nexus Repo"){
+            steps{
+                script{
+                    def buildId = "${env.BUILD_NUMBER}"
+                    def nexusImageName = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${Image_Name}:${buildId}"
+                    sh "docker login ${NEXUS_URL}"
+                    // sh "docker tag ${Image_Name}:${buildId} ${NEXUS_URL}/${NEXUS_REPOSITORY}/${Image_Name}:${buildId}"
+                    sh "docker push ${NEXUS_URL}/${NEXUS_REPOSITORY}/${Image_Name}:${buildId}"
+                }
+            }
+        }
+        stage("Run Nexus Image"){
+            steps{
+                script{
+                    def buildId = "${env.BUILD_NUMBER}"
+                    def nexusImageName = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${Image_Name}:${buildId}"
+                    def containerName = "${Image_Name}_container"
+                    def ports = "5002"
+                    def existingContainer = sh(script: "docker ps -a -q -f name=${containerName}", returnStdout: true).trim()
+                    // Remove the existing container if it exists
+                    if (existingContainer) {
+                        echo "Removing existing container: ${containerName}"
+                        sh "docker rm -f ${containerName}"
+                    } else {
+                        echo "No existing container named ${containerName} found. Skipping removal."
+                    }
+                    sh "docker run -d -p ${ports}:${ports} --name ${containerName} ${nexusImageName}"
+                }
+            }
+        }
+        // stage("Remove Docker images"){
+        //     steps{
+        //         script{
+        //             def buildId = "${env.BUILD_NUMBER}"
+        //             def nexusImageName = "${NEXUS_URL}/${NEXUS_REPOSITORY}/${Image_Name}:${buildId}"
+        //             sh "docker rmi ${nexusImageName} || true"
+        //             sh "docker rmi ${Image_Name}:${buildId} || true"
+        //         }
+        //     }
+        // }
+    }    
+}
