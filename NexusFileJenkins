@@ -1,3 +1,6 @@
+{
+## Staging Pipeline in internal ##
+}
 pipeline {
     agent{
         label "krazy22-staging" // Agent Mention in Nodes 
