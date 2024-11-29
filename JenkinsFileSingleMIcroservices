@@ -153,3 +153,15 @@ pipeline {
         // }
     }    
 }
+Build after other projects are built
+Projects to watch :
+
+contest-microservices: No dependencies.
+cron-microservices: Depends on contest-microservices.
+game-microservices: Depends on cron-microservices.
+master-data-microservices: Depends on game-microservices.
+user-auth-microservices: Depends on master-data-microservices.
+user-microservices: Depends on user-auth-microservices.
+wallet-microservices: Depends on user-microservices.
+scorecard-microservices: Depends on wallet-microservices.
+master-microservices: Depends on scorecard-microservices
