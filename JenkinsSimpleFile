@@ -1,0 +1,67 @@
+pipeline {
+    agent {
+        label "AstroWebsite"
+    }
+    environment {
+        BITBUCKET_CREDENTIALS = "FSPAPI"
+        ImageName = "astrowebsite"
+        ImageTag = "${env.ImageName}:${env.BUILD_NUMBER}"
+        ContainerName = "AstroContainer"
+        port = "8080"
+    }
+    
+    tools {
+        nodejs "nvm"
+    }
+    stages{
+        stage("Checkout Repo"){
+            steps{
+                script{
+                    git ( 
+                        branch: "dev_dafin",
+                        url: "https://SciflareIT@bitbucket.org/web-sciflare/sciflare-website.git",
+                        credentialsId: "${BITBUCKET_CREDENTIALS}"
+                    )
+                }
+            }
+        }
+        stage("Clean Up Old Docker Container and Images"){
+            steps{
+                script{
+                    def containerExists = sh(script: "docker ps -a --filter 'name=${ContainerName}' -q", returnStdout: true).trim()
+                    if (containerExists) {
+                       echo "Stopping and removing old container: ${ContainerName}"
+                       sh "docker stop ${containerExists} && docker rm ${containerExists}"
+                    } else {
+                        echo "No container found with Name : ${ContainerName}"
+                    }
+                }
+            }
+        }
+        stage("Build Image"){
+            steps{
+                script{
+                    echo "Building the Docker Image For Astro"
+                    sh "docker build -t ${ImageTag} ."
+                }
+            }
+        }
+        stage("Deploy"){
+            steps{
+                script{
+                    echo "Runing Docker Container Using AStro Image"
+                    sh "docker run --name ${ContainerName} -d -p ${port}:${port} ${ImageTag}"
+                }
+            }
+        }
+        stage("Dangling Images"){
+            steps{
+                script{
+                    echo "Dangling the Images"
+                    // sh 'docker images -q -f dangling=true | xargs --no-run-if-empty docker rmi'
+                    sh "docker image prune -a -f"
+                }
+            }
+        }
+    }
+}
