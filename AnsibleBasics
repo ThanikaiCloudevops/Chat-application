@@ -1,0 +1,71 @@
+# Ansible is an configuration management tools used to manage servers with aws ,azure any cloud and on-premises.
+# we see configuration management tool in market chef puppet so much is there but Ansible is quiet popular and chef and puppet are agent , it mean we need to install agent in target server or manage nodes
+# But ansible is an agentless we didnt install anything in target server or manage nodes we need only python to install .
+
+# In Ansible we have concept control node and manage nodes ,
+        - Control nodes is install ansible it will communication with target to install manage some task into it.
+        - Manage node is nothing but target env installation some apache2 and python
+# Step one Setup ansible conttrol node and manage node :
+      There are two types one is ssh via connection and password authecation:
+        I have three server we define name of that servers AnsibleControlNodes , server 2 ManageNode1 server 3 ManageNode2 
+
+# I installed Ansible in AnsibleControlNodes with using python pip that is best practices or other you can install by offical documnetation
+      Now Ansible control node communication with Manages nodes so i done use ssh and password i will explain you in both way.
+
+One is go inside the ansible server use command 
+         commands - ssh-copy-id -f "-o IdentityFile <PATH TO PEM FILE>" ubuntu@<INSTANCE-PUBLIC-IP>
+ >   ssh-copy-id: This is the command used to copy your public key to a remote machine.
+ >   -f: This flag forces the copying of keys, which can be useful if you have keys already set up and want to overwrite them.
+ >   "-o IdentityFile ": This option specifies the identity file (private key) to use for the connection. The -o flag passes this option to the underlying ssh command.
+ >    ubuntu@: This is the username (ubuntu) and the IP address of the remote server you want to access.
+Using password Based Authecation:
+   > Go to the file /etc/ssh/sshd_config.d/60-cloudimg-settings.conf
+   > Update PasswordAuthentication yes
+   > Restart SSH -> sudo systemctl restart ssh
+
+# Once connect with Two server then we can use Ansible inventory.ini the inventory file have two place one is /etc/ansible/hosts/ and one you can create inventory 
+<-------------------------------------------->Ansible adhoc commands <---------------------------------------------------------->
+# How can we run ansible adhoc commands 
+     > once you mention the server ip addr in AnsibleControlNode you attach ip addr of ManageNode1 and ManageNode2 in inventory file
+     > Then you can use ansible -i (path_of_inventoryFile) -m (moduleOfAnsible) all {example commands- ansible -i inventory.ini -m ping all }
+      COMMANDS -> ansible -i inventory -m shell -a "ls /var/www" all or you can give ip of ManageNodes
+
+IMPORTANT : - Another option is there in ansible in inventory file 
+Grouping the Nodes: for example i have 4 nodes 2 app and 2 db how i can  mention in inventory file
+[app]
+ubuntu@192.168.72.123
+ubuntu@172.68.32.16
+
+[db]
+ubuntu@192.168.72.456
+ubuntu@172.68.32.118
+
+<--------------------------------------->    ANSIBLE PLAYBOOK <---------------------------------------------------->
+# Now we can Move to Ansible Playbooks for written script 
+---
+- hosts: ip-add or local or all ----------------host of your machine or target machine
+  become: true -------------------------------- it mention root user if we didnt give access you machine default user like ubuntu
+  tasks: -------------------------------------- mention tasks in list format
+    - name: Install anything you_need ------------- name of task
+      ansible.builtin.apt: ----------------------------- modules in ansible you can refer in ansible documention 
+        name: apache2 ------------------------------------- install what you need to want like apache2 , python , nginx
+        state: present  ------------------------------------- i becomes apache2 if present or not it will simple sake (install or uninstall)
+In ansible playbook we have list of plays starts from - name is one plays we can mention another plays also 
+    - name: Copy file with owner and permissions
+      ansible.builtin.copy:
+        src: index.html
+        dest: /var/www/html
+        owner: root
+        group: root
+        mode: '0644
+  ####################################################################################
+
+
+
+
+
+
+
+
+
+
