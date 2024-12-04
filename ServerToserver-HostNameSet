@@ -1,0 +1,21 @@
+#Commands
+hostnamectl
+#Set hostname 
+sudo hostnamectl set-hostname ds-mmdevb01
+Checkhost name
+sudo nano /etc/hostname
+
+sudo systemctl restart systemd-hostnamed
+
+
+IF You need to communicate server into server for example jenkins need to commuincate with ansbile server via ssh for example : ssh admin@192.138.72.63 means 
+you have to stay in default user you cant communication b/w root user to root user 
+
+communication methos list out below :
+          Create key in jenkins use Commands -> { ssh-keygen -t rsa -b 4096 -f ./my_custom_keyName }
+          And you login into ansible server cd .ssh/authorized_key add you created customkey NOTE: publickey you have to paste
+          and come to jenkins server use command
+                          ssh admin@192.138.72.63 it will login into that server via ssh 
+
+# If incase you need to communication with both machine create and copy both key into the both machine in authorized kay method
+
