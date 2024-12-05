@@ -1,0 +1,45 @@
+Today we are see Ansible playbook , Roles and Galaxy first Ansible Playbook 
+---
+- hosts: ipadd
+  become: true or remote_user: root
+  tasks:
+    - name: install webserver
+      apt: 
+        name: apache2
+        status: present
+        updatte_check: yes
+    - name: Ensure apache2 service is started
+      service:
+      name: apache2
+      status: started
+      
+ROLES:
+  This is ansible playbook this gives continous with so much of lines i means so much of plays at on playbook it keep on going
+  if you install k8s cluster configure or oracle 
+
+  So we need to reduce our diffcultvity using ansible roles * ansible roles is one of key to structure our playbook how it works lettt me explain:
+ansible roles is we can simple readlable and modular of ansible playbook for example
+                  using commands: ansbile-galary role init {name_of_roles}
+                  it will create roles under the roles we can see folder structure like
+                              roles/
+    common/               # this hierarchy represents a "role"
+        tasks/            #
+            main.yml      #  <-- tasks file can include smaller files if warranted
+        handlers/         #
+            main.yml      #  <-- handlers file
+        templates/        #  <-- files for use with the template resource
+            ntp.conf.j2   #  <------- templates end in .j2
+        files/            #
+            bar.txt       #  <-- files for use with the copy resource
+            foo.sh        #  <-- script files for use with the script resource
+        vars/             #
+            main.yml      #  <-- variables associated with this role
+        defaults/         #
+            main.yml      #  <-- default lower priority variables for this role
+        meta/             #
+            main.yml      #  <-- role dependencies
+
+    GALAXY:
+        now we can see ansible galaxy , galaxy is place to involve the exsiting script in ansible offical page : - https://galaxy.ansible.com/ui/
+        there you seen most of inbuild script to executive in our furuture use 
+                              
