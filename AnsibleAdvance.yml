@@ -13,9 +13,13 @@ Today we are see Ansible playbook , Roles and Galaxy first Ansible Playbook
       name: apache2
       status: started
       
+    COMMANDS: ansible-playbook -i inventory.ini {name_of_Ansible_playbook} 
+      
 ROLES:
   This is ansible playbook this gives continous with so much of lines i means so much of plays at on playbook it keep on going
-  if you install k8s cluster configure or oracle 
+  if you install k8s cluster configure or oracle
+  
+ CREATE ROLES IN COMMANDS : ansible-galaxy role init {NameOfRoles}
 
   So we need to reduce our diffcultvity using ansible roles * ansible roles is one of key to structure our playbook how it works lettt me explain:
 ansible roles is we can simple readlable and modular of ansible playbook for example
@@ -38,8 +42,18 @@ ansible roles is we can simple readlable and modular of ansible playbook for exa
             main.yml      #  <-- default lower priority variables for this role
         meta/             #
             main.yml      #  <-- role dependencies
+      ROLES MENTION IN PLAYBOOKS:
+            - name: Install and configure the web server
+              hosts: web_servers
+              roles:
+                - {name_of_roles}
+
 
     GALAXY:
         now we can see ansible galaxy , galaxy is place to involve the exsiting script in ansible offical page : - https://galaxy.ansible.com/ui/
-        there you seen most of inbuild script to executive in our furuture use 
+        there you seen most of inbuild script to executive in our furuture use .
+        Ansible Galaxy is a repository of pre-written roles and collections shared by the community. 
+        You can search for and use existing roles from the Galaxy repository instead of writing your own from scratch.
+        
+        USING COMMANDS: ansible-galaxy role install geerlingguy.apache
                               
