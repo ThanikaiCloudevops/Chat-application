@@ -1,0 +1,67 @@
+pipeline {
+    agent {
+        label "astrowebsite"
+    }
+    environment {
+        BITBUCKET_CRENDENTIALS = "fsapi"
+        ImageName = "AstroWebsite"
+        ImageTag = "${env.ImageName}:${env.BULID_NUMBER}"
+        ContainerName = "Astrocontainer"
+        port = "8080"
+    }
+    tools{
+        nodejs "nvm"
+    }
+    stages{
+        stage("Checkout Repo"){
+            steps{
+                script{
+                    git (
+                        branch: "bugfix"
+                        credentailsId:"${BITBUCKET_CREDENTIALS}"
+                        url: ""
+                    )
+                }
+            }
+        }
+        stage("Remove Old Container "){
+            steps{
+                script{
+                    def containerExist = sh("docker ps -a  --filter 'name=${ConatinerName}' -q" , returnStdout:true).trim()
+                    if (containerExist) {
+                        echo "remove old container"
+                        sh "docker stop ${containerExist} & docker rm ${containerExist}"
+                    }
+                    else {
+                        echo "Skipping the stage No container in ${containerExit}"
+                    }
+                }
+            }
+        }
+        stage("Build"){
+            steps{
+                script{
+                    echo "Building the docker images"
+                    sh "docker build -t ${ImageTag} ."
+                }
+            }
+        }
+        stage("Deploy"){
+            steps{
+                script{
+                    echo "deploy Image into the container"
+                    sh " docker run --name=${ContainerName} -d -p ${port}:${port} ${ImageTag}"  
+                }
+            }
+        }
+        stage ("dangling Images"){
+            steps{
+                script{
+                    echo "Remove docker images unused or not assicoted with container"
+                    sh "docker image prune -a -f"
+                    // sh "docker images -q -f dangling=true | xargs --no-run-if-empty docker rmi "
+                }
+            }
+        }
+    }
+}
