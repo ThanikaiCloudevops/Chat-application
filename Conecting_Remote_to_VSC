@@ -1,0 +1,16 @@
+Install the Remote SSH Extension
+If you haven’t already, download and install VSCode for your OS from here.
+
+You can then search for the extension “Remote-SSH” in the VSCode marketplace.
+
+Once Installed, you should see a new Status bar item at the far left.
+
+The status item can be used to quickly open the Remote SSH settings. Click on the status item.
+
+IF ANY DOUBT CHECK THIS URL: https://medium.com/@christyjacob4/using-vscode-remotely-on-an-ec2-instance-7822c4032cff
+
+config file 
+Host aws-ec2 - default as this
+    HostName ec2-44-229-243-8.us-west-2.compute.amazonaws.com - ssh id 
+    User ubuntu - what user 
+    IdentityFile ~/aws-key/test-key-pair.pem - path of key pair
