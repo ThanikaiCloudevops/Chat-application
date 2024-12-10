@@ -1,0 +1,5 @@
+#SPDX-License-Identifier: MIT-0
+---
+# vars file for ec2
+aws_access_key: AKIA4CDUU23W4NI6JNVO
+aws_secret_key: 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

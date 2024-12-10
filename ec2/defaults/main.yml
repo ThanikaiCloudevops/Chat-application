@@ -1,0 +1,8 @@
+#SPDX-License-Identifier: MIT-0
+---
+# defaults file for ec2
+type : t2.micro
+key_name: devops
+images_id :  ami-053b12d3152c0cc71
+security_groups_name: DevopsInternal 
+region: ap-south-1
