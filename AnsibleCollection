@@ -1,0 +1,26 @@
+Need to install to community with aws api - pip install boto3
+and need to install ansible collection - ansible-galaxy collection install amazon.aws -force
+It say thats amazon third party collection install into the local repo it can community with aws api
+And Another concept called vault to store secret and sentive data commands list:
+            ansible-vault create vault.yaml
+             -> asking for password
+            ansible-vault view vault.yaml
+            ansible-vault edit vault.yaml
+            ansible-vault decrypt vault.yaml
+            ansible-vault encrypt vault.yaml
+            ansible-vault rekey encrypt_me.txt --> to change password of encrpt file
+Moving group variable into sentive data refer this url : https://www.digitalocean.com/community/tutorials/how-to-use-vault-to-protect-sensitive-ansible-data
+COMMANDS:
+    mkdir -p group_vars
+    nano group_vars/database
+    mv group_vars/database group_vars/vars
+    mkdir group_vars/database
+    mv group_vars/vars group_vars/database/
+    nano group_vars/database/vars
+    ansible-vault create group_vars/database/vault
+├── . . .
+├── group_vars/
+│   └── database/
+│       ├── vars
+│       └── vault
+└── . . .
