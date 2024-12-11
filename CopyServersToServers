@@ -20,3 +20,6 @@ scp -i /path/to/your/private-key.pem /path/to/local/file username@remote-host:/p
 # SOurce is not as command in shell you can use in jenkinsfile 
 . ansible_env/bin/activate (OR) sh 'bash -c "source ansible_env/bin/activate"'
 
+# TO list aws Iam access in terminal Commands is :
+ aws ec2 describe-instances --instance-ids $(curl -s http://13.232.169.110/latest/meta-data/instance-id) --query "Reservations[].Instances[].IamInstanceProfile"
+Instead of IP you can give publicIP of ec2 instance
