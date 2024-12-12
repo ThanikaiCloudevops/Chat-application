@@ -1,0 +1,21 @@
+# Update the package list
+sudo apt update
+
+# Install Java 17
+sudo apt install openjdk-17-jdk
+
+# Install Java 11 (if needed)
+sudo apt install openjdk-11-jdk
+
+# Install Gradle 8.10.2
+sudo apt install wget unzip
+wget https://services.gradle.org/distributions/gradle-8.10.2-bin.zip
+sudo unzip gradle-8.10.2-bin.zip -d /opt/
+sudo ln -s /opt/gradle-8.10.2/bin/gradle /usr/local/bin/gradle
+
+# Set environment variables (optional but recommended)
+echo 'export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64' >> ~/.bashrc
+echo 'export GRADLE_HOME=/opt/gradle-8.10.2' >> ~/.bashrc
+echo 'export PATH=$JAVA_HOME/bin:$PATH' >> ~/.bashrc
+echo 'export PATH=$GRADLE_HOME/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
