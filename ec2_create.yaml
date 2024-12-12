@@ -1,0 +1,6 @@
+# Ansible Playbook SCript
+---
+- hosts: localhost
+  connection: local
+  roles:
+    - ec2

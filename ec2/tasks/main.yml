@@ -1,0 +1,30 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for ec2
+- name: start an instance with a public IP address
+  amazon.aws.ec2_instance:
+    name: "AnsibleServer"
+    key_name: "{{ key_name }}"
+    # vpc_subnet_id: subnet-5ca1ab1e
+    instance_type: "{{ type }}"
+    security_group: "{{ sg }}"
+    aws_region: "{{ region }}"
+    aws_access_key: "{{ aws_access_key }}"
+    aws_secret_key: "{{ aws_secret_key }}"
+    network_interfaces:
+      - assign_public_ip: true
+    image_id: "{{ image_ami }}"
+    volumes:
+      - device_name: /dev/sda1
+        ebs:
+          volume_size: 30
+          delete_on_termination: true
+# Installing software in server creating by ansible server via ansible script
+- name: Installing software packages  on ubuntu
+  ansible.builtin.apt:
+    name: "{{ packages }}"
+    state: present
+
+
+
+    
