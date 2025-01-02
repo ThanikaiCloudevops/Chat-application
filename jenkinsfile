@@ -65,3 +65,39 @@ pipeline {
         }
     }
 }
+
+
+
+# AWS Secret manager with use of shared library jenkinsfile
+pipeline {
+    agent any 
+    
+    environment {
+        GITHUB_CREDS = credentials("BitbucketRepo")  // Fetch credentials from Jenkins Credentials store
+    }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                script {
+                    // Testing if the credentials work
+                    echo "Using GitHub credentials with username: ${GITHUB_CREDS_USR}"
+                    
+                    // Now try to perform a git checkout with the provided credentials
+                    try {
+                        // Replace with your actual Git repository URL
+                        def gitUrl = 'https://SciflareIT@bitbucket.org/dpl11-backend/goo-plus.git'
+
+                        // Perform the Git checkout operation using the credentials
+                        git credentialsId: 'BitbucketRepo', url: gitUrl
+
+                        echo "Checkout successful!"
+                    } catch (Exception e) {
+                        echo "Checkout failed: ${e.getMessage()}"
+                        currentBuild.result = 'FAILURE'
+                    }
+                }
+            }
+        }
+    }
+}
