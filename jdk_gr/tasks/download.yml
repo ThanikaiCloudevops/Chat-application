@@ -1,0 +1,20 @@
+---
+
+- name: Install and configure Gradle Globally
+  block:
+
+
+  - name: DOwnload Gradle Version binary
+    ansible.builtin.get_url:
+      url: "{{ gradle_package_url }}/gradle-{{ gradle_version }}-bin.zip"
+      dest: "/opt/gradle-{{ gradle_version }}-bin.zip"
+      checksum: "{{ gradle_checksum_algorithm }}"
+
+  - name: Extract Gradle Version binary into/gradle
+    ansible.builtin.unarchive:
+      remote_src: yes
+      src: "/opt/gradle-{{ gradle_version }}-bin.zip"
+      dest: "/opt/"
+      owner: "root"
+      group: "root"
+      mode: 0755

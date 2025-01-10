@@ -1,0 +1,25 @@
+#SPDX-License-Identifier: MIT-0
+---
+# tasks file for jdk_gr
+- name: Download jdk-17 in /opt/
+  ansible.builtin.get_url:
+    url: https://download.oracle.com/java/17/archive/jdk-17.0.12_linux-x64_bin.deb
+    dest: /opt/jdk-17.0.12_linux-x64_bin.deb
+    mode: '0755'
+
+- name: Install a oracle Java-17 from the internet
+  ansible.builtin.apt:
+    deb: /opt/jdk-17.0.12_linux-x64_bin.deb
+    state: present
+  become: true
+
+- name: Download Gradle Binary
+  ansible.builtin.import_tasks: download.yml
+
+- name: Configure Gradle Version globally
+  ansible.builtin.import_tasks: global.yml
+  when: gradle_global == true
+
+- name: configure Java in global
+  ansible.builtin.import_tasks: global.yml
+  #when: java_global == true

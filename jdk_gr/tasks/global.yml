@@ -1,0 +1,28 @@
+---
+
+# Configure the requested Gradle
+
+# Gradle Install globally in server
+- name: Add Gradle Version to Global
+  ansible.builtin.lineinfile:
+    path: /etc/profile.d/gradle.sh
+    regexp: '^export PATH='
+    line: "export PATH=$PATH:/opt/gradle-{{ gradle_version }}/bin"
+    create: yes
+    mode: '0644'
+
+# Oracle java installed globally in server
+- name: set JAVA_HOME env
+  ansible.builtin.lineinfile:
+    path: /etc/environment
+    regexp: '^JAVA_HOME='
+    line: 'JAVA_HOME=/usr/lib/jvm/java-17-oracle'
+    state: present
+    create: yes
+
+- name: Add JAVA_HOME to PATH in /etc/profile
+  ansible.builtin.lineinfile:
+    path: /etc/profile
+    regexp: '^export PATH=.*JAVA_HOME.*'
+    line: 'export PATH=$JAVA_HOME/bin:$PATH'
+    state: present

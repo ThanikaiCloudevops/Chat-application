@@ -1,0 +1,21 @@
+---
+- name: Download and Install configure to Instances
+  block:
+  
+  - name: Download Gradle Version Binary 
+    ansible.builtin.get_url:
+      url: "{{ gradle_package_url }}"
+      dest: "/opt/gradle/{{ gradle_package_url }}"
+      checksum: "{{ gradle_checksum }}"
+
+  - name: Extract Gradle 
+    ansible.builtin.unarchive: 
+      src: "/opt/gradle/{{gradle_package_url}}"
+      dest: "/opt/gradle/"
+      owner: "root"
+      group: "root"
+      mode: 0755
+
+  - name: Download Java 
+    ansible.builtin.deb:
+      name: https://download.oracle.com/java/17/latest/jdk-17_linux-x64_bin.deb

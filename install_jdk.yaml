@@ -1,6 +1,7 @@
-# Ansible Playbook SCript
 ---
+
 - hosts: localhost
   connection: local
+  gather_facts: yes
   roles:
-    - ec2
+   - jdK_gr

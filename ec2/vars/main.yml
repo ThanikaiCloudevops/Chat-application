@@ -1,5 +1,21 @@
 #SPDX-License-Identifier: MIT-0
 ---
 # vars file for ec2
+
+# Aws Related Information 
+# subnets
+subnet: subnet-04b43c69154ad1db0
+# Vpc_id
+vpc_id: vpc-0d660e912dbe22e9b
+#instance Type
 type: t2.small
-packages: openjdk-17-jdk
+#name of key
+key_name: devops
+#security group of aws 
+sg : DevopsInternal
+# AWs ami-id 
+image_ami : ami-053b12d3152c0cc71
+# Aws Region
+region: ap-south-1
+# CIDR block
+cidr_block: 172.31.0.0/16
