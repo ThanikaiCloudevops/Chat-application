@@ -17,3 +17,4 @@ solution : git pull origin branch-name --allow-unrelated-histories
 -> git fetch origin (fetch all the code)
 -> git stash (untracked or hold the present commits)
 -> git clean -fd (Cleaning up file and dire)
+- > export BITBUCKET_REPO_SECRET=$(aws secretsmanager get-secret-value --secret-id BitbucketRepo --query 'SecretString' --output text) # Aws Secret Store in server
