@@ -11,7 +11,7 @@ pipelineJob("GooplusBuildDeploy"){
                 }
 
             }
-            scriptPath('pipeline/templates/jenkinsfile')
+            scriptPath('pipeline/templates/gooplus.groovy')
         }
     }
 }

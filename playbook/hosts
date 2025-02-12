@@ -2,3 +2,5 @@
 ;  52.66.153.153 ansible_connection=ssh  ansible_user=ubuntu anisble_ssh_private_key_file=/home/admin/.ssh/targethost1
 52.66.153.153 ansible_connection=ssh  ansible_user=ubuntu anisble_ssh_private_key_file=/root/.ssh/targethostgo
 
+[sportsdata]
+43.204.155.150 ansible_connection=ssh ansible_user=ubuntu

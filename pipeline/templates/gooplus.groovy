@@ -4,7 +4,7 @@ pipeline{
     agent {
         label "node-1"
     }
-
+    //  environment For Project specific Urls 
     environment {
         GIT_URL = "https://SciflareIT@bitbucket.org/dpl11-backend/goo-plus.git"
         GIT_BRANCH = "seran_dev"
@@ -44,7 +44,7 @@ pipeline{
             // agent{label "AnsibleDeployment"}
             steps{
                 script{
-                    checkoutCode.ansiblecheckout()
+                    checkoutCode.devopscheckout()
                 }
             }
         }
